@@ -5,15 +5,15 @@
     "Punchline": "SkipCutscene was taking too long to update, so here we are",
     "Description": "SkipCutscene was taking too long to update, so here we are",
     "InternalName": "Skippy",
-    "AssemblyVersion": "1.2.2.7",
+    "AssemblyVersion": "1.2.2.8",
     "RepoUrl": "https://github.com/BoxuChan/Skippy",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 13,
     "TestingDalamudApiLevel": 13,
     "IsHide": "False",
     "IsTestingExclusive": "False",
-    "DownloadLinkInstall": "https://github.com/BoxuChan/Skippy/releases/download/1.2.2.7/Skippy.zip",
-    "DownloadLinkUpdate": "https://github.com/BoxuChan/Skippy/releases/download/1.2.2.7/Skippy.zip",
+    "DownloadLinkInstall": "https://github.com/BoxuChan/Skippy/releases/download/1.2.2.8/Skippy.zip",
+    "DownloadLinkUpdate": "https://github.com/BoxuChan/Skippy/releases/download/1.2.2.8/Skippy.zip",
     "IconUrl": "https://raw.githubusercontent.com/BoxuChan/Skippy/master/Skippy/assets/icon.png",
     "Tags": [
       "Boxu"
