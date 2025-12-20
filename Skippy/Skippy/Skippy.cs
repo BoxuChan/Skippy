@@ -1,14 +1,15 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using Dalamud;
-using Dalamud.Game;
 using Dalamud.Game.Command;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
 namespace Plugins.a08381.Skippy
 {
+    [SuppressMessage("ReSharper", "UnusedType.Global")]
     public class Skippy : IDalamudPlugin
     {
         public string Name => "Skippy";
@@ -43,9 +44,7 @@ namespace Plugins.a08381.Skippy
                 configuration = new Config { IsEnabled = true, Version = 1 };
 
             _config = configuration;
-
-            Address = new CutsceneAddressResolver(_pluginLog); 
-            Address.Setup(_sigScanner);
+            Address = new CutsceneAddressResolver(_pluginLog, _sigScanner);
 
             if (Address.Valid)
             {
@@ -92,6 +91,7 @@ namespace Plugins.a08381.Skippy
         private void OnCommand(string command, string arguments)
         {
             if (command.ToLower() != "/sc") return;
+            
             byte[] rndSeries = new byte[4];
             _csp.GetBytes(rndSeries);
             int rnd = (int)Math.Abs(BitConverter.ToUInt32(rndSeries, 0) / _base * 50 + 1);
@@ -106,32 +106,36 @@ namespace Plugins.a08381.Skippy
         }
     }
 
-    public class CutsceneAddressResolver : BaseAddressResolver
+    public class CutsceneAddressResolver
     {
-        private readonly IPluginLog _log;
-
-        public CutsceneAddressResolver(IPluginLog log)
-        {
-            _log = log;
-        }
-
         public bool Valid => Offset1 != IntPtr.Zero && Offset2 != IntPtr.Zero;
-
         public IntPtr Offset1 { get; private set; }
         public IntPtr Offset2 { get; private set; }
 
-        protected override void Setup64Bit(ISigScanner sig)
+        public CutsceneAddressResolver(IPluginLog log, ISigScanner sig)
         {
-            Offset1 = sig.ScanText("75 ?? 48 8b 0d ?? ?? ?? ?? ba ?? 00 00 00 48 83 c1 10 e8 ?? ?? ?? ?? 83 78 ?? ?? 74");
-            Offset2 = sig.ScanText("74 18 8B D7 48 8D 0D");
+            Setup(log, sig);
+        }
 
-            var baseAddr = Process.GetCurrentProcess().MainModule!.BaseAddress.ToInt64();
+        private void Setup(IPluginLog log, ISigScanner sig)
+        {
+            try 
+            {
+                Offset1 = sig.ScanText("75 ?? 48 8b 0d ?? ?? ?? ?? ba ?? 00 00 00 48 83 c1 10 e8 ?? ?? ?? ?? 83 78 ?? ?? 74");
+                Offset2 = sig.ScanText("74 18 8B D7 48 8D 0D");
 
-            if (Offset1 != IntPtr.Zero)
-                _log.Information("Offset1: [\"ffxiv_dx11.exe\"+{0:X}]", Offset1.ToInt64() - baseAddr);
-            
-            if (Offset2 != IntPtr.Zero)
-                _log.Information("Offset2: [\"ffxiv_dx11.exe\"+{0:X}]", Offset2.ToInt64() - baseAddr);
+                var baseAddr = Process.GetCurrentProcess().MainModule!.BaseAddress.ToInt64();
+
+                if (Offset1 != IntPtr.Zero)
+                    log.Information("Offset1: [\"ffxiv_dx11.exe\"+{0:X}]", Offset1.ToInt64() - baseAddr);
+                
+                if (Offset2 != IntPtr.Zero)
+                    log.Information("Offset2: [\"ffxiv_dx11.exe\"+{0:X}]", Offset2.ToInt64() - baseAddr);
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Failed to scan for Cutscene signatures");
+            }
         }
     }
 }
