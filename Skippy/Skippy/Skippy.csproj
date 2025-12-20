@@ -1,21 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net9.0-windows</TargetFramework>
-    <OutputType>Library</OutputType>
-    <PlatformTarget>x64</PlatformTarget>
-    <Platforms>x64;AnyCPU</Platforms>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Dalamud">
-      <HintPath>..\Lib\Dalamud\Dalamud.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="13.0.0" />
-  </ItemGroup>
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.Sdk/14.0.1">
+    <PropertyGroup>
+        <Description>SkipCutscene was taking too long to update, so here we are</Description>
+        <PackageProjectUrl>https://github.com/BoxuChan/Skippy</PackageProjectUrl>
+        <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
 </Project>
