@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.Sdk/14.0.1">
     <PropertyGroup>
-        <Description>SkipCutscene was taking too long to update, so here we are</Description>
+        <Description>Skip the Main Scenario Roulette Cutscenes so you can actually play the game!</Description>
         <PackageProjectUrl>https://github.com/BoxuChan/Skippy</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
