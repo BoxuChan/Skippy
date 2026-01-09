@@ -1,4 +1,7 @@
 # Skippy
+
+The plugin has last been updated to function with **[Dalamud 14.0.1](https://github.com/goatcorp/Dalamud)** under FFXIV's 7.4 Patch.
+
 ## _"So that you never have to hear Gaius yap again."_
 
 Are you tired of having to go through **Main Scenario Roulettes** while just sitting there, having to read all of that yap from NPCs that don't especially matter for the 1,000,000,000th time? You've come to the right place.
@@ -23,9 +26,5 @@ https://raw.githubusercontent.com/BoxuChan/Hako/main/repo.json
 - _(Optional)_ Queue for any kind of **Main Scenario Roulette** Dungeon/Trial in **Unsynched Party**.
 - Queue for your **Main Scenario Roulette**.
 - Enjoy! No more cutscenes, anywhere throughout the dungeon/trial!
-
-## Development
-
-The plugin has last been updated to function with **[Dalamud 14.0.1](https://github.com/goatcorp/Dalamud)** under FFXIV's 7.4 Patch.
 
 [![Tell me... For whom do you fight?](https://boxu.fr/ffxiv/gaius.png)](https://boxu.fr/ffxiv/gaius.png)
