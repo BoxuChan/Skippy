@@ -4,8 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using Dalamud;
 using Dalamud.Game.Command;
+using Dalamud.Hooking;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace Plugins.a08381.Skippy
 {
@@ -19,21 +21,25 @@ namespace Plugins.a08381.Skippy
         private readonly decimal _base = uint.MaxValue;
         private readonly IDalamudPluginInterface _pluginInterface;
         private readonly ISigScanner _sigScanner;
+        private readonly IGameInteropProvider _gameInteropProvider;
         private readonly ICommandManager _commandManager;
         private readonly IChatGui _chatGui;
         private readonly IPluginLog _pluginLog;
 
         public CutsceneAddressResolver Address { get; }
+        private Hook<UIState.Delegates.IsCutsceneSeen>? _cutsceneSeenHook;
 
         public Skippy(
             IDalamudPluginInterface pluginInterface,
             ISigScanner sigScanner,
+            IGameInteropProvider gameInteropProvider,
             ICommandManager commandManager,
             IChatGui chatGui,
             IPluginLog pluginLog)
         {
             _pluginInterface = pluginInterface;
             _sigScanner = sigScanner;
+            _gameInteropProvider = gameInteropProvider;
             _commandManager = commandManager;
             _chatGui = chatGui;
             _pluginLog = pluginLog;
@@ -72,7 +78,7 @@ namespace Plugins.a08381.Skippy
             GC.SuppressFinalize(this);
         }
 
-        public void SetEnabled(bool isEnable)
+        public unsafe void SetEnabled(bool isEnable)
         {
             if (!Address.Valid) return;
             
@@ -80,11 +86,15 @@ namespace Plugins.a08381.Skippy
             {
                 SafeMemory.Write<short>(Address.Offset1, -28528);
                 SafeMemory.Write<short>(Address.Offset2, -28528);
+                _cutsceneSeenHook = _gameInteropProvider.HookFromAddress<UIState.Delegates.IsCutsceneSeen>(UIState.MemberFunctionPointers.IsCutsceneSeen, CutsceneSeenDetour);
+                _cutsceneSeenHook.Enable();
             }
             else
             {
                 SafeMemory.Write<short>(Address.Offset1, 14709);
                 SafeMemory.Write<short>(Address.Offset2, 6260);
+                _cutsceneSeenHook?.Dispose();
+                _cutsceneSeenHook = null;
             }
         }
 
@@ -104,6 +114,14 @@ namespace Plugins.a08381.Skippy
             SetEnabled(_config.IsEnabled);
             _pluginInterface.SavePluginConfig(_config);
         }
+
+        private unsafe bool CutsceneSeenDetour(UIState* thisPtr, uint cutsceneId)
+        {
+            bool result = _cutsceneSeenHook!.Original(thisPtr, cutsceneId);
+            _pluginLog.Verbose($"Checking cutscene {cutsceneId}, seen: {result}");
+            return true;
+        }
+        
     }
 
     public class CutsceneAddressResolver
