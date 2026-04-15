@@ -18,7 +18,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Setup Dalamud
         run: |
@@ -35,26 +35,24 @@ jobs:
       - name: Remove Useless
         run: |
           cd "$Env:GITHUB_WORKSPACE"
-          Remove-Item -Path .\Skippy\bin\Release\net9.0-windows -Force -Recurse -ErrorAction:Continue
-          Remove-Item -Path .\Skippy\bin\Release\Skippy.deps.json -Force -Recurse -ErrorAction:Continue
           mkdir -Path .\Skippy\bin\Package\ -ErrorAction:Continue
 
       - name: Package
         uses: vimtor/action-zip@v1
         with:
-          files: Skippy\bin\Release\Skippy.dll Skippy\bin\Release\Skippy.json Skippy\bin\Release\Skippy.pdb
+          files: Skippy\bin\x64\Release\Skippy.dll Skippy\bin\x64\Release\Skippy.json Skippy\bin\x64\Release\Skippy.pdb
           dest: Skippy\bin\Package\Skippy.zip
 
       - name: Copy JSON to Package
         run: |
           cd "$Env:GITHUB_WORKSPACE"
-          Copy-Item -Path .\Skippy\bin\Release\Skippy.json -Destination .\Skippy\bin\Package\
+          Copy-Item -Path .\Skippy\bin\x64\Release\Skippy.json -Destination .\Skippy\bin\Package\
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Skippy
-          path: ${{ github.workspace }}\Skippy\bin\Release\
+          path: ${{ github.workspace }}\Skippy\bin\x64\Release\
 
       - name: Upload Package artifact
         uses: actions/upload-artifact@v4
