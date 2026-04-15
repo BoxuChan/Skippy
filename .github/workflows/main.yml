@@ -1,13 +1,13 @@
-name: CI
+name: Build and Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
     tags: [ '*' ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
-  
+
 jobs:
   build:
     runs-on: windows-latest
@@ -24,82 +24,21 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
           Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
-          
+
       - name: Restore dependencies
-        run: dotnet restore Skippy.sln
+        run: dotnet restore Skippy\Skippy.sln 
 
       - name: Build
-        run: |
-          dotnet build $Env:GITHUB_WORKSPACE\Skippy.sln /p:Configuration=Release /p:DefineConstants=XL_NOAUTOUPDATE
+        run: dotnet build $Env:GITHUB_WORKSPACE\Skippy\Skippy.sln /p:Configuration=Release /p:DefineConstants=XL_NOAUTOUPDATE
 
-      - name: Remove Useless
-        run: |
-          cd "$Env:GITHUB_WORKSPACE"
-          mkdir -Path .\Skippy\bin\Package\ -ErrorAction:Continue
+      - name: Create Package Directory
+        run: mkdir -Path .\Skippy\bin\Package\ -ErrorAction:Continue
 
       - name: Package
         uses: vimtor/action-zip@v1
         with:
           files: Skippy\bin\x64\Release\Skippy.dll Skippy\bin\x64\Release\Skippy.json Skippy\bin\x64\Release\Skippy.pdb
           dest: Skippy\bin\Package\Skippy.zip
-
-      - name: Copy JSON to Package
-        run: |
-          cd "$Env:GITHUB_WORKSPACE"
-          Copy-Item -Path .\Skippy\bin\x64\Release\Skippy.json -Destination .\Skippy\bin\Package\
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Skippy
-          path: ${{ github.workspace }}\Skippy\bin\x64\Release\
-
-      - name: Upload Package artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Package
-          path: ${{ github.workspace }}\Skippy\bin\Package\
-
-      - name: Checkout dist
-        uses: actions/checkout@v4
-        with:
-          ref: dist
-          path: dist
-
-      - name: Upload dist
-        continue-on-error: false
-        run: |
-          cd "$Env:GITHUB_WORKSPACE"
-          $content = Get-Content ".\dist\repo.json"
-          $repo = $content | ConvertFrom-Json
-          $version = '"AssemblyVersion": "9.9.9.9"'
-          $plugin = Get-Content ".\Skippy\bin\Package\Skippy.json" | ConvertFrom-Json
-          
-          $old_version = $version -replace '9.9.9.9',$repo.AssemblyVersion
-          $new_version = $version -replace '9.9.9.9',$plugin.AssemblyVersion
-          $content = $content -replace $old_version,$new_version
-          
-          $api_level = '"DalamudApiLevel": 9999'
-          $old_api_level = $api_level -replace '9999',$repo.DalamudApiLevel
-          $new_api_level = $api_level -replace '9999',$plugin.DalamudApiLevel
-          $content = $content -replace $old_api_level,$new_api_level
-          
-          Set-Content -Path ".\dist\repo.json" -Value $content
-          Copy-Item -Path .\Skippy\bin\Package\Skippy.zip -Destination .\dist\ -Force
-          
-          cd dist
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git commit -m "Regenerate PluginMaster"
-
-      - name: Push dist
-        continue-on-error: false
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: dist
-          directory: dist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
