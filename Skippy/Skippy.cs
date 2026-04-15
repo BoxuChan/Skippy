@@ -5,8 +5,10 @@ using System.IO;
 using System.Security.Cryptography;
 using Dalamud;
 using Dalamud.Game.Command;
+using Dalamud.Hooking;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace Skippy
 {
@@ -22,6 +24,9 @@ namespace Skippy
         private readonly IChatGui _chatGui;
         private readonly IPluginLog _pluginLog;
 
+        private readonly IGameInteropProvider _gameInteropProvider;
+        private Hook<UIState.Delegates.IsCutsceneSeen>? _cutsceneSeenHook;
+        
         public CutsceneAddressResolver Address { get; }
 
         public Skippy(
@@ -29,13 +34,15 @@ namespace Skippy
             ISigScanner sigScanner,
             ICommandManager commandManager,
             IChatGui chatGui,
-            IPluginLog pluginLog)
+            IPluginLog pluginLog,
+            IGameInteropProvider gameInteropProvider)
         {
             _pluginInterface = pluginInterface;
             _sigScanner = sigScanner;
             _commandManager = commandManager;
             _chatGui = chatGui;
             _pluginLog = pluginLog;
+            _gameInteropProvider = gameInteropProvider;
 
             _csp = RandomNumberGenerator.Create();
 
@@ -87,7 +94,7 @@ namespace Skippy
             GC.SuppressFinalize(this);
         }
 
-        public void SetEnabled(bool isEnable)
+        public unsafe void SetEnabled(bool isEnable)
         {
             if (!Address.Valid) return;
 
@@ -95,12 +102,31 @@ namespace Skippy
             {
                 SafeMemory.Write<short>(Address.Offset1, -28528);
                 SafeMemory.Write<short>(Address.Offset2, -28528);
+                
+                if (_cutsceneSeenHook == null)
+                {
+                    _cutsceneSeenHook = _gameInteropProvider.HookFromAddress<UIState.Delegates.IsCutsceneSeen>(
+                        UIState.MemberFunctionPointers.IsCutsceneSeen, 
+                        CutsceneSeenDetour);
+                    _cutsceneSeenHook.Enable();
+                }
             }
             else
             {
                 SafeMemory.Write<short>(Address.Offset1, 14709);
                 SafeMemory.Write<short>(Address.Offset2, 6260);
+                
+                _cutsceneSeenHook?.Dispose();
+                _cutsceneSeenHook = null;
             }
+        }
+        
+        private unsafe bool CutsceneSeenDetour(UIState* thisPtr, uint cutsceneId)
+        {
+            bool result = _cutsceneSeenHook!.Original(thisPtr, cutsceneId);
+            _pluginLog.Verbose($"Checking cutscene {cutsceneId}, seen: {result}");
+            
+            return true;
         }
 
         private void OnCommand(string command, string arguments)
@@ -187,8 +213,6 @@ namespace Skippy
         {
             try
             {
-                // Le ConfigDirectory pointe vers %AppData%\Roaming\XIVLauncher\pluginConfigs\Skippy
-                // Le log se trouve deux dossiers plus haut (dans XIVLauncher)
                 var pluginConfig = _pluginInterface.ConfigDirectory;
                 var xivLauncher = pluginConfig.Parent?.Parent;
                 
