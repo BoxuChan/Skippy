@@ -1,7 +1,7 @@
 ﻿using System;
 using Dalamud.Configuration;
 
-namespace Plugins.a08381.Skippy
+namespace Skippy
 {
     [Serializable]
     public class Config : IPluginConfiguration

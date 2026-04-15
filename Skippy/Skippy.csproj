@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/14.0.1">
+<Project Sdk="Dalamud.NET.Sdk/14.0.2">
     <PropertyGroup>
         <Description>Skip the Main Scenario Roulette Cutscenes so you can actually play the game!</Description>
         <PackageProjectUrl>https://github.com/BoxuChan/Skippy</PackageProjectUrl>
