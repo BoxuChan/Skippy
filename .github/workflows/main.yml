@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
+    tags: [ '*' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -85,7 +85,7 @@ jobs:
           $content = $content -replace $old_api_level,$new_api_level
           
           Set-Content -Path ".\dist\repo.json" -Value $content
-          Copy-Item -Path .\Skippy\bin\Package\latest.zip -Destination .\dist\ -Force
+          Copy-Item -Path .\Skippy\bin\Package\Skippy.zip -Destination .\dist\ -Force
           
           cd dist
           git config --local user.email "action@github.com"
