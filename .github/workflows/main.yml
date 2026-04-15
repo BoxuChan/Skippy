@@ -100,7 +100,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: dist
           directory: dist
-          
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') 
