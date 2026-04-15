@@ -8,7 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\main.yml = .github\workflows\main.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skippy", "Skippy.csproj", "{06ECADEF-8D6C-4744-95CF-4471E80C5D27}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skippy", "Skippy\Skippy.csproj", "{34D5ADDE-A1CA-4695-9E95-BFE220E23B20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,10 +16,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{06ECADEF-8D6C-4744-95CF-4471E80C5D27}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{06ECADEF-8D6C-4744-95CF-4471E80C5D27}.Debug|Any CPU.Build.0 = Debug|x64
-		{06ECADEF-8D6C-4744-95CF-4471E80C5D27}.Release|Any CPU.ActiveCfg = Release|x64
-		{06ECADEF-8D6C-4744-95CF-4471E80C5D27}.Release|Any CPU.Build.0 = Release|x64
+		{34D5ADDE-A1CA-4695-9E95-BFE220E23B20}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{34D5ADDE-A1CA-4695-9E95-BFE220E23B20}.Debug|Any CPU.Build.0 = Debug|x64
+		{34D5ADDE-A1CA-4695-9E95-BFE220E23B20}.Release|Any CPU.ActiveCfg = Release|x64
+		{34D5ADDE-A1CA-4695-9E95-BFE220E23B20}.Release|Any CPU.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -28,6 +28,6 @@ Global
 		SolutionGuid = {8ACBD50E-0330-473C-AFDF-21442A1D9979}
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{06ECADEF-8D6C-4744-95CF-4471E80C5D27} = {0116F546-85BE-4B8B-9A6A-282D9B097AAB}
+		{34D5ADDE-A1CA-4695-9E95-BFE220E23B20} = {0116F546-85BE-4B8B-9A6A-282D9B097AAB}
 	EndGlobalSection
 EndGlobal
