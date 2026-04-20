@@ -26,10 +26,10 @@ jobs:
           Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
 
       - name: Restore dependencies
-        run: dotnet restore Skippy\Skippy.sln 
+        run: dotnet restore Skippy.sln 
 
       - name: Build
-        run: dotnet build $Env:GITHUB_WORKSPACE\Skippy\Skippy.sln /p:Configuration=Release /p:DefineConstants=XL_NOAUTOUPDATE
+        run: dotnet build $Env:GITHUB_WORKSPACE\Skippy.sln /p:Configuration=Release /p:DefineConstants=XL_NOAUTOUPDATE
 
       - name: Create Package Directory
         run: mkdir -Path .\Skippy\bin\Package\ -ErrorAction:Continue
