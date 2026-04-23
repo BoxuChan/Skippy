@@ -18,6 +18,11 @@ You may find the full list of available plugins on the **[Hako | 箱](https://gi
 https://raw.githubusercontent.com/BoxuChan/Hako/main/repo.json
 ```
 
+Or you can also just use the recent new [Puni.sh Repository](https://puni.sh/directory/boxu) we just got ready to use!
+```
+https://puni.sh/api/repository/boxu
+```
+
 ## Commands
 
 - **/skippy [on/off/log]**: Toggle the plugin state or export your log file to send to the developer.
