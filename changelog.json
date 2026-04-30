@@ -1,0 +1,9 @@
+﻿[
+  {
+    "version": "2.1.1.0",
+    "date": "2024-04-30",
+    "changes": [
+      "Updated to work with API 15 (Patch 7.5)"
+    ]
+  }
+]
