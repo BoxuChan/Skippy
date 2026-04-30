@@ -1,0 +1,19 @@
+﻿name: Publish to Dynamis (Puni.sh)
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and publish
+        uses: Jaksuhn/DynamisPublishAction@master
+        with:
+          plugin_id: '130'
+          publisher_key: ${{ secrets.PUBLISHER_KEY }}
