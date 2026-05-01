@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
     <PropertyGroup>
-        <Description>Skip the Main Scenario Roulette Cutscenes so you can actually play the game!</Description>
+        <Description>Skip all of the Cutscenes that bother you (MSQ Roulette for example) so you can actually play the game!</Description>
         <PackageProjectUrl>https://github.com/BoxuChan/Skippy</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
@@ -10,4 +10,14 @@
 		<TargetFramework>net10.0-windows</TargetFramework>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+	<ItemGroup>
+		<Content Include="assets\icon.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>icon.png</TargetPath>
+		</Content>
+		<Content Include="..\README.md">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>README.md</TargetPath>
+		</Content>
+	</ItemGroup>
 </Project>
