@@ -17,12 +17,12 @@ namespace Skippy.Skips {
             return 0;
         }
 
-        internal void OnTerritoryChanged(ushort territory) {
+        internal void OnTerritoryChanged(uint territory) {
             if (!_config.IsEnabled) {
                 return;
             }
             
-            bool exempt = IsExemptedTerritory(territory);
+            bool exempt = IsExemptedTerritory((ushort)territory);
             SetEnabled(!exempt);
             
             if (!exempt) {
