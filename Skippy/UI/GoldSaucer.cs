@@ -83,6 +83,8 @@ namespace Skippy.UI {
                 Toggle("##ExemptFallGuys", skipAll ? "Exempt: Fall Guys Event (Blunderville)" : "Skip: Fall Guys Event (Blunderville)", "Blunderville is the seasonal Fall Guys crossover event. This option will only be available when the event is active.", ref fallguys);
                 _config.ExemptFallGuys = fallguys;
             }
+
+            WipToggle(skipAll ? "Exempt: Fashion Report" : "Skip: Fashion Report");
         }
     }
 }
