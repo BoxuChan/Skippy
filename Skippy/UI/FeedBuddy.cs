@@ -11,13 +11,13 @@ namespace Skippy.UI {
             ImGui.Spacing();
 
             bool changed = false;
-            bool master  = _config.SkipFeedBuddy;
+            bool master = _config.SkipFeedBuddy;
             
             FeatureCheckbox("##SkipFeedBuddy", "Skip Feed Buddy Cutscene", "Not much to say there, a bit sad you don't want to see that cute animation :(", ref master, out changed);
             
-            if (changed)
-            {
-                _config.SkipFeedBuddy = master; 
+            if (changed) {
+                _config.SkipFeedBuddy = master;
+                
                 Skippy.Instance.Hooks.RefreshHooks(); 
                 _saveConfig();
             }

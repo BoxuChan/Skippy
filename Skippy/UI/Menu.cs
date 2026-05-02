@@ -40,7 +40,7 @@ namespace Skippy.UI {
 
         internal static readonly HttpClient Http = new();
 
-        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.0.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
+        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.1.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
             _config = config;
             _setEnabled = setEnabled;
             _saveConfig = saveConfig;
@@ -107,19 +107,20 @@ namespace Skippy.UI {
                 ImGui.TableSetupColumn("##Menu", ImGuiTableColumnFlags.WidthFixed, 200f);
                 ImGui.TableSetupColumn("##Content", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableNextColumn();
-                ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
-
                 if (ImGui.BeginChild("##Categories", new Vector2(0, topHeight), false, ImGuiWindowFlags.NoDecoration)) {
                     DrawPowerButton();
 
-                    ImGui.Spacing(); ImGui.Separator(); ImGui.Spacing();
+                    ImGui.Spacing();
+                    ImGui.Separator();
+                    ImGui.Spacing();
 
-                    NavItem("MSQ Roulette", Category.MSQRoulette);
-                    NavItem("Large-Scale Content", Category.MassivePC);
-                    NavItem("Gold Saucer", Category.GoldSaucer);
-                    NavItem("NPC Dialogue", Category.CustomTalk);
-                    NavItem("World Cutscenes", Category.NormalCutscenes);
-                    NavItem("Feed Buddy", Category.FeedBuddy);
+                    bool error = !Skippy.Instance.Address.Valid;
+                    NavItem("MSQ Roulette", Category.MSQRoulette, _config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta, error);
+                    NavItem("Large-Scale Content", Category.MassivePC, _config.SkipMassivePC, error);
+                    NavItem("Gold Saucer", Category.GoldSaucer, _config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys, error);
+                    NavItem("NPC Dialogue", Category.CustomTalk, _config.SkipCustomTalk || _config.ExemptSubmarines, error);
+                    NavItem("World Cutscenes", Category.NormalCutscenes, _config.SkipNormalCutscenes, error);
+                    NavItem("Feed Buddy", Category.FeedBuddy, _config.SkipFeedBuddy, error);
 
                     ImGui.Spacing(); 
                     ImGui.Separator(); 
@@ -130,81 +131,74 @@ namespace Skippy.UI {
                     if (risky) {
                         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.5f, 0.5f, 0.5f, 0.6f));
                         ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.15f, 0.15f, 0.15f, 0.4f));
-                        ImGui.PushStyleColor(ImGuiCol.HeaderActive,  new Vector4(0.10f, 0.10f, 0.10f, 0.4f));
+                        ImGui.PushStyleColor(ImGuiCol.HeaderActive, new Vector4(0.10f, 0.10f, 0.10f, 0.4f));
                     } else {
                         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.45f, 0.35f, 1.0f));
                         ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.35f, 0.10f, 0.05f, 0.8f));
-                        ImGui.PushStyleColor(ImGuiCol.HeaderActive,  new Vector4(0.30f, 0.08f, 0.04f, 1.0f));
+                        ImGui.PushStyleColor(ImGuiCol.HeaderActive, new Vector4(0.30f, 0.08f, 0.04f, 1.0f));
                     }
 
                     var riskyHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y * 3f;
                     var riskyPos = ImGui.GetCursorScreenPos();
                     var riskyWidth = ImGui.GetContentRegionAvail().X;
+                    var padding = ImGui.GetStyle().FramePadding.X;
 
                     if (_category == Category.RiskySkips) {
                         var drawList = ImGui.GetWindowDrawList();
-                        var column = ImGui.GetColorU32(ImGuiCol.Header);
-                        
-                        drawList.AddRectFilled(riskyPos, new Vector2(riskyPos.X + riskyWidth, riskyPos.Y + riskyHeight), column);
+                        drawList.AddRectFilled(riskyPos, new Vector2(riskyPos.X + riskyWidth, riskyPos.Y + riskyHeight), ImGui.GetColorU32(ImGuiCol.Header));
                     }
 
-                    var icon = FontAwesomeIcon.ExclamationTriangle.ToIconString();
-                    float iconWidth;
-                    
-                    using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
-                        iconWidth = ImGui.CalcTextSize(icon).X;
-                    }
-
-                    var label = "  Risky Skips";
-                    var labelWidth = ImGui.CalcTextSize(label).X;
-                    var width = iconWidth + labelWidth;
-                    var textX = riskyPos.X + (riskyWidth - width) * 0.5f;
-                    var textY = riskyPos.Y + (riskyHeight - ImGui.GetTextLineHeight()) * 0.5f;
-
-                    ImGui.SetCursorScreenPos(new Vector2(textX, textY));
-                    
-                    using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
-                        ImGui.TextUnformatted(icon);
-                    }
-
-                    ImGui.SameLine(0, 0);
-                    ImGui.TextUnformatted(label);
                     ImGui.SetCursorScreenPos(riskyPos);
                     ImGui.InvisibleButton("##RiskySkipsButtons", new Vector2(riskyWidth, riskyHeight));
-                    
+
                     if (ImGui.IsItemHovered()) {
                         var drawList = ImGui.GetWindowDrawList();
                         drawList.AddRectFilled(riskyPos, new Vector2(riskyPos.X + riskyWidth, riskyPos.Y + riskyHeight), ImGui.GetColorU32(ImGuiCol.HeaderHovered));
                     }
 
-                    if (ImGui.IsItemClicked())
-                    {
-                        if (!_config.HideWarning) {
-                            _showPopup = true;
-                        } else {
-                            _category = Category.RiskySkips;
-                        }
+                    if (ImGui.IsItemClicked()) {
+                        if (!_config.HideWarning) _showPopup = true;
+                        else _category = Category.RiskySkips;
                     }
-                    
+
+                    {
+                        var drawList = ImGui.GetWindowDrawList();
+                        var icon = FontAwesomeIcon.ExclamationTriangle.ToIconString();
+                        float width;
+
+                        using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
+                            width = ImGui.CalcTextSize(icon).X;
+                        }
+
+                        var iconColor = risky ? ImGui.ColorConvertFloat4ToU32(new Vector4(0.5f, 0.5f, 0.5f, 0.6f)) : ImGui.ColorConvertFloat4ToU32(new Vector4(1.0f, 0.45f, 0.35f, 1.0f));
+                        var textColor = iconColor;
+
+                        var x = riskyPos.X + padding + 8f;
+                        var y = riskyPos.Y + (riskyHeight - ImGui.GetTextLineHeight()) * 0.5f;
+                        var textPosition = x + width + 6f;
+
+                        drawList.AddText(_pluginInterface.UiBuilder.IconFontHandle.Lock().ImFont, ImGui.GetFontSize(), new Vector2(x, y), iconColor, icon);
+                        drawList.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(textPosition, y), textColor, "Risky Skips");
+                    }
+
                     ImGui.PopStyleColor(3);
                     
                     ImGui.Spacing(); 
                     ImGui.Separator(); 
                     ImGui.Spacing();
 
-                    NavItem("Auto-Party Mode", Category.AutoParty);
-                    NavItem("Logger", Category.Logger);
+                    IconNavItem("Auto-Party Mode", Category.AutoParty, FontAwesomeIcon.Users, new Vector4(0.70f, 0.70f, 0.70f, 1.0f));
+                    IconNavItem("Logger", Category.Logger, FontAwesomeIcon.FileAlt, new Vector4(0.70f, 0.70f, 0.70f, 1.0f));
 
                     ImGui.Spacing(); 
                     ImGui.Separator(); 
                     ImGui.Spacing();
 
-                    NavItem("Commands", Category.Commands);
-                    NavItem("About", Category.About);
+                    IconNavItem("Commands", Category.Commands, FontAwesomeIcon.Terminal, new Vector4(0.70f, 0.70f, 0.70f, 1.0f));
+                    IconNavItem("About", Category.About, FontAwesomeIcon.InfoCircle, new Vector4(0.70f, 0.70f, 0.70f, 1.0f));
                 }
                 
                 ImGui.EndChild();
-                ImGui.PopStyleVar();
                 ImGui.TableNextColumn();
 
                 var flags = ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysVerticalScrollbar;
@@ -213,6 +207,12 @@ namespace Skippy.UI {
                     ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(10f, 8f));
                     ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X - 20f);
                     ImGui.BeginGroup();
+
+                    bool disabled = !_config.IsEnabled && !(_config.AutoEnable4Man && _config.IsEnabled && _category == Category.MSQRoulette);
+                    
+                    if (disabled) {
+                        ImGui.BeginDisabled();
+                    }
 
                     switch (_category) {
                         case Category.MSQRoulette:
@@ -260,7 +260,7 @@ namespace Skippy.UI {
                             break;
                     }
 
-                    if (!_config.IsEnabled && !(_config.AutoEnable4Man && _config.IsEnabled && _category == Category.MSQRoulette)) {
+                    if (disabled) {
                         ImGui.EndDisabled();
                     }
 
@@ -294,8 +294,8 @@ namespace Skippy.UI {
         private void DrawPopup() {
             if (_showPopup) {
                 ImGui.OpenPopup("##Popup");
-                _showPopup  = false;
-                _popupOpen  = true;
+                _showPopup = false;
+                _popupOpen = true;
             }
 
             ImGui.SetNextWindowSize(new Vector2(420, 0), ImGuiCond.Always);
@@ -326,7 +326,7 @@ namespace Skippy.UI {
                 ImGui.PopStyleColor();
                 ImGui.Spacing();
                 
-                ImGui.TextWrapped("The skips contained within this category are very experimental and may carry a heavy ban risk.\n\n" + "By enabling any of these, you accept full responsibility for any consequences, I, the developer, have no responsibility in your choice of usages. ");
+                ImGui.TextWrapped("The skips contained within this category are very experimental and may carry a heavy ban risk.\n\n" + "By enabling any of these, you accept full responsibility for any consequences, I, the developer, have no responsibility in your choice of usages.");
                 
                 ImGui.Spacing();
                 ImGui.Separator();
@@ -370,8 +370,9 @@ namespace Skippy.UI {
             ImGui.Spacing();
             ImGui.SetCursorPosX((width - button) * 0.5f);
 
-            var tint = _config.IsEnabled ? new Vector4(1f, 1f, 1f, 1f) : new Vector4(0.30f, 0.30f, 0.30f, 0.80f);
-            var border = _config.IsEnabled ? new Vector4(0.40f, 0.40f, 0.90f, 0.80f) : new Vector4(0.22f, 0.22f, 0.22f, 0.60f);
+            bool hasError = !Skippy.Instance.Address.Valid;
+            var tint = hasError ? new Vector4(1.0f, 0.55f, 0.10f, 1.00f) : _config.IsEnabled ? new Vector4(1f, 1f, 1f, 1f) : new Vector4(0.30f, 0.30f, 0.30f, 0.80f);
+            var border = hasError ? new Vector4(0.80f, 0.40f, 0.05f, 0.90f) : _config.IsEnabled ? new Vector4(0.40f, 0.40f, 0.90f, 0.80f) : new Vector4(0.22f, 0.22f, 0.22f, 0.60f);
 
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0f, 0f, 0f, 0f));
             ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.15f, 0.15f, 0.30f, 0.80f));
@@ -385,7 +386,7 @@ namespace Skippy.UI {
             ImGui.PopStyleVar(2);
             ImGui.PopStyleColor(4);
 
-            if (clicked) {
+            if (clicked && !hasError) {
                 _config.IsEnabled = !_config.IsEnabled;
                 _setEnabled(_config.IsEnabled);
                 _saveConfig();
@@ -393,26 +394,94 @@ namespace Skippy.UI {
 
             if (ImGui.IsItemHovered()) {
                 using var tooltip = ImRaii.Tooltip();
-                ImGui.TextUnformatted(_config.IsEnabled ? "[ENABLED] — Click to Disable Skippy" : "[DISABLED] — Click to Enable Skippy");
+                ImGui.TextUnformatted(hasError ? "[ERROR] — Cutscene offsets not found, the plugin will not work" : _config.IsEnabled ? "[ENABLED] — Click to Disable Skippy" : "[DISABLED] — Click to Enable Skippy");
             }
 
-            ImGui.Spacing();
-            CenteredText(_config.IsEnabled ? "Status:  ●" : "Status:  ○");
         }
 
-        private void NavItem(string label, Category target) {
-            var itemHeight = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y * 3f;
+        private void NavItem(string label, Category target, bool active, bool hasError = false) {
+            var height = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y * 3f;
             bool greyOut = !_config.IsEnabled && !(_config.AutoEnable4Man && _config.IsEnabled && target == Category.MSQRoulette);
-            
+
+            var iconColor = greyOut ? new Vector4(0.5f, 0.5f, 0.5f, 0.4f) : !active ? new Vector4(0.70f, 0.20f, 0.20f, 1.0f) : hasError ? new Vector4(1.0f, 0.55f, 0.10f, 1.0f) : new Vector4(0.20f, 0.80f, 0.20f, 1.0f);
+            var icon = hasError && active ? FontAwesomeIcon.ExclamationCircle.ToIconString() : FontAwesomeIcon.Circle.ToIconString();
+
             if (greyOut) {
                 ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.5f, 0.5f, 0.5f, 0.6f));
                 ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.15f, 0.15f, 0.15f, 0.4f));
-                ImGui.PushStyleColor(ImGuiCol.HeaderActive,  new Vector4(0.10f, 0.10f, 0.10f, 0.4f));
+                ImGui.PushStyleColor(ImGuiCol.HeaderActive, new Vector4(0.10f, 0.10f, 0.10f, 0.4f));
             }
 
-            if (ImGui.Selectable(label, _category == target, ImGuiSelectableFlags.None, new Vector2(0, itemHeight))) {
+            var cursor = ImGui.GetCursorScreenPos();
+            var drawList = ImGui.GetWindowDrawList();
+            var padding = ImGui.GetStyle().FramePadding.X;
+
+            float width;
+
+            using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
+                width = ImGui.CalcTextSize(icon).X;
+            }
+
+            ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
+            
+            if (ImGui.Selectable($"##{target}", _category == target, ImGuiSelectableFlags.None, new Vector2(0, height))) {
                 _category = target;
             }
+            
+            ImGui.PopStyleVar();
+
+            var leftPadding = 8f;
+            var iconX = cursor.X + padding + leftPadding;
+            var iconY = cursor.Y + (height - ImGui.GetTextLineHeight()) * 0.5f;
+            var textX = iconX + width + 8f;
+            var textY = iconY;
+
+            drawList.AddText(_pluginInterface.UiBuilder.IconFontHandle.Lock().ImFont, ImGui.GetFontSize(), new Vector2(iconX, iconY), ImGui.ColorConvertFloat4ToU32(iconColor), icon);
+            drawList.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(textX, textY), ImGui.GetColorU32(ImGuiCol.Text), label);
+
+            if (greyOut) {
+                ImGui.PopStyleColor(3);
+            }
+        }
+
+        private void IconNavItem(string label, Category target, FontAwesomeIcon faIcon, Vector4 iconColor) {
+            var height = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y * 3f;
+            bool greyOut = !_config.IsEnabled;
+
+            if (greyOut) {
+                iconColor = new Vector4(0.5f, 0.5f, 0.5f, 0.4f);
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.5f, 0.5f, 0.5f, 0.6f));
+                ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.15f, 0.15f, 0.15f, 0.4f));
+                ImGui.PushStyleColor(ImGuiCol.HeaderActive, new Vector4(0.10f, 0.10f, 0.10f, 0.4f));
+            }
+
+            var cursor = ImGui.GetCursorScreenPos();
+            var drawList = ImGui.GetWindowDrawList();
+            var padding = ImGui.GetStyle().FramePadding.X;
+            var icon = faIcon.ToIconString();
+
+            float width;
+
+            using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
+                width = ImGui.CalcTextSize(icon).X;
+            }
+
+            ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
+
+            if (ImGui.Selectable($"##{target}", _category == target, ImGuiSelectableFlags.None, new Vector2(0, height))) {
+                _category = target;
+            }
+            
+            ImGui.PopStyleVar();
+
+            var leftPadding = 8f;
+            var iconX = cursor.X + padding + leftPadding;
+            var iconY = cursor.Y + (height - ImGui.GetTextLineHeight()) * 0.5f;
+            var textX = iconX + width + 8f;
+            var textY = iconY;
+
+            drawList.AddText(_pluginInterface.UiBuilder.IconFontHandle.Lock().ImFont, ImGui.GetFontSize(), new Vector2(iconX, iconY), ImGui.ColorConvertFloat4ToU32(iconColor), icon);
+            drawList.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(textX, textY), ImGui.GetColorU32(ImGuiCol.Text), label);
 
             if (greyOut) {
                 ImGui.PopStyleColor(3);
@@ -489,7 +558,7 @@ namespace Skippy.UI {
         internal async Task LoadRemoteImage(string url, Action<IDalamudTextureWrap> onLoaded) {
             try {
                 var bytes = await Http.GetByteArrayAsync(url).ConfigureAwait(false);
-                var wrap  = await _tex.CreateFromImageAsync(bytes).ConfigureAwait(false);
+                var wrap = await _tex.CreateFromImageAsync(bytes).ConfigureAwait(false);
                 onLoaded(wrap);
             } catch { }
         }

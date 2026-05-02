@@ -4,7 +4,7 @@ using Dalamud.Configuration;
 namespace Skippy {
     [Serializable]
     public class Config : IPluginConfiguration {
-        public int Version { get; set; } = 2;
+        public int Version { get; set; } = 3;
 
         public bool IsEnabled { get; set; } = true;
 
@@ -21,8 +21,11 @@ namespace Skippy {
         public bool ExemptTripleTriad { get; set; } = false;
         public bool FallGuysEventActive { get; set; } = false;
         public bool ExemptFallGuys { get; set; } = false;
+        public bool ExemptAirForceOne { get; set; } = false;
+        public bool ExemptMahjong { get; set; } = false;
 
         public bool SkipCustomTalk { get; set; } = false;
+        public bool ExemptSubmarines { get; set; } = false;
         
         public bool SkipNormalCutscenes { get; set; } = false;
 

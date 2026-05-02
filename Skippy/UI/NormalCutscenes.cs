@@ -11,24 +11,26 @@ namespace Skippy.UI {
             ImGui.Spacing();
 
             bool changed = false;
-            bool master  = _config.SkipNormalCutscenes;
+            bool master = _config.SkipNormalCutscenes;
             
             FeatureCheckbox("##SkipNormalCutscenes", "Skip all of the World & Quest Cutscenes", "If you find any sort of cutscene that is skipped by that group, feel free to inform me about it so I can figure out more about how to split the group into exemptions and more.", ref master, out changed);
 
             if (changed) {
-                _config.SkipNormalCutscenes = master; 
+                _config.SkipNormalCutscenes = master;
+                
                 Skippy.Instance.Hooks.RefreshHooks(); 
                 _saveConfig();
             }
 
-            SectionHeader("[WIP] Exemptions");
+            bool skipAll = _config.SkipNormalCutscenes;
+            SectionHeader(skipAll ? "[WIP] Exemptions" : "[WIP] Skip Specific");
             
-            ImGui.TextWrapped("As I have yet to figure out the details and contents of this signature hook, no exemptions or further toggles are planned just yet.");
+            ImGui.TextWrapped("As I have yet to figure out the details and contents of this signature hook, no " + (skipAll ? "exemptions" : "specific skips") + " are planned just yet.");
             
             ImGui.Spacing(); 
             ImGui.Spacing();
             
-            WipToggle("Exempt: (Unknown)");
+            WipToggle(skipAll ? "Exempt: (Unknown)" : "Skip: (Unknown)");
         }
     }
 }

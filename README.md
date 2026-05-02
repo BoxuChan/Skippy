@@ -25,7 +25,10 @@ https://puni.sh/api/repository/boxu
 
 ## Commands
 
-- **/skippy [on/off/log/territory]**: Toggle the plugin state, export your log file, or print your current territory ID.
+- **/skippy**: Opens the settings window.
+- **/skippy [on/off]**: Enables or disables Skippy.
+- **/skippy [log/export]**: Exports your Dalamud log file to your Desktop.
+- **/skippy [territory/zone]**: Prints your current territory ID and IntendedUse to chat.
 - **/sc**: Good old sanity check with a dice roll.
 
 ## How to Use
@@ -43,14 +46,14 @@ https://puni.sh/api/repository/boxu
 
 Skippy covers a fairly wide range of cutscenes now, which all belong to independently toggleable categories:
 
-| Category                    | Description                                                                                                                                                                     |
-|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **MSQ Roulette**            | Cutscenes that belong to the Main Scenario Roulette Dungeons & Trial. Per-Instance Exemptions are available!                                                                    |
-| **Large-Scale Content**     | Cutscenes that may belong to large-scale content like Variant Dungeons perhaps? We have yet to map out the contents list, feel free to report what you managed to skip with it! |
-| **Gold Saucer**             | Cutscenes that are within Gold Saucer game modes. Per-Mode Exemptions are available for Chocobo Racing, Lord of Verminion, Triple Triad & Blunderville!                         |
-| **NPC Dialogue Cutscenes**  | Cutscenes that are triggered through NPC Custom Talk dialogue. We have yet to map out the contents list, feel free to report what you managed to skip with it!                  |
-| **World & Quest Cutscenes** | Cutscenes that are usually ran throughout the Overworld and Quests. We have yet to map out the contents list, feel free to report what you managed to skip with it!             |
-| **Feed Buddy Scene**        | Cutscene that belongs to the Companion Feeding Animation.                                                                                                                       |
+| Category                    | Description                                                                                                                                                                                                                                           |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **MSQ Roulette**            | Cutscenes that belong to the Main Scenario Roulette Dungeons & Trial. When Skip All is on, per-instance Exemptions are available. When off, you can instead pick specific instances to skip.                                                          |
+| **Large-Scale Content**     | Cutscenes that may belong to large-scale content like Variant Dungeons perhaps? We have yet to map out the contents list, feel free to report what you managed to skip with it!                                                                       |
+| **Gold Saucer**             | Cutscenes that are within Gold Saucer game modes. When Skip All is on, per-mode Exemptions are available (Chocobo Racing, Lord of Verminion, Triple Triad, Fall Guys, Air Force One, Mahjong). When off, you can pick specific modes to skip instead. |
+| **NPC Dialogue Cutscenes**  | Cutscenes that are triggered through NPC Custom Talk dialogue. Submarine Voyage cutscenes can be toggled independently.                                                                                                                               |
+| **World & Quest Cutscenes** | Cutscenes that are usually ran throughout the Overworld and Quests. We have yet to map out the contents list, feel free to report what you managed to skip with it!                                                                                   |
+| **Feed Buddy Scene**        | Cutscene that belongs to the Companion Feeding Animation.                                                                                                                                                                                             |
 
 ## Risky Skips
 
@@ -84,7 +87,7 @@ Returns the names of all the categories of skips that are currently active.
 var categories = pluginInterface.GetIpcSubscriber<string[]>("Skippy.GetSkippedCategories").InvokeFunc();
 ```
 
-Possible values: `MSQ Roulette`, `Large-Scale Content`, `Gold Saucer`, `NPC Dialogue Cutscenes`, `World & Quest Cutscenes`, `Feed Buddy Scene`, `Ocean Fishing`, `Crystalline Conflict`, `Inn Skip`.
+Possible keys: `IsEnabled`, `AutoEnable4Man`, `SkipMSQRoulette`, `ExemptPrae`, `ExemptCastrum`, `ExemptPorta`, `SkipMassivePC`, `SkipGoldSaucer`, `ExemptChocoboRacing`, `ExemptVerminion`, `ExemptTripleTriad`, `ExemptFallGuys`, `ExemptAirForceOne`, `ExemptMahjong`, `SkipCustomTalk`, `SkipNormalCutscenes`, `SkipFeedBuddy`, `SkipOceanFishing`, `SkipCrystallineConflict`, `SkipInn`.
 
 ### `Skippy.GetConfig` → `Dictionary<string, bool>`
 Returns the full configuration information of Skippy as a key/value map.

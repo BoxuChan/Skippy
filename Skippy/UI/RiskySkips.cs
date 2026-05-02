@@ -8,7 +8,7 @@ namespace Skippy.UI {
             var bannerHeight = ImGui.GetStyle().ItemSpacing.Y * 5f + ImGui.GetTextLineHeight() * 3f + 14f;
             
             ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(0.35f, 0.08f, 0.04f, 0.90f));
-            ImGui.PushStyleColor(ImGuiCol.Border,  new Vector4(0.80f, 0.20f, 0.10f, 0.90f));
+            ImGui.PushStyleColor(ImGuiCol.Border, new Vector4(0.80f, 0.20f, 0.10f, 0.90f));
             ImGui.PushStyleVar(ImGuiStyleVar.ChildBorderSize, 1.5f);
 
             if (ImGui.BeginChild("##Banner", new Vector2(-1, bannerHeight), true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
@@ -23,7 +23,7 @@ namespace Skippy.UI {
                 }
 
                 var labelWidth = ImGui.CalcTextSize(" Warning").X;
-                var avail  = ImGui.GetContentRegionAvail().X;
+                var avail = ImGui.GetContentRegionAvail().X;
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (avail - iconWidth - labelWidth) * 0.5f);
                 
                 using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
@@ -64,7 +64,8 @@ namespace Skippy.UI {
             FeatureCheckbox("##SkipOcean", "Enable Ocean Fishing Skip", "Skips cutscenes during Ocean Fishing. Enable at your own discretion and be aware of the risks.", ref ocean, out cutscene1);
             
             if (cutscene1) {
-                _config.SkipOceanFishing = ocean; 
+                _config.SkipOceanFishing = ocean;
+                
                 Skippy.Instance.Hooks.RefreshHooks(); 
                 _saveConfig();
             }
@@ -82,7 +83,8 @@ namespace Skippy.UI {
             FeatureCheckbox("##SkipCC", "Enable Crystalline Conflict Skip", "Skips the intro cutscene in Crystalline Conflict. Enable at your own discretion and be aware of the risks.", ref cc, out cutscene2);
 
             if (cutscene2) {
-                _config.SkipCrystallineConflict = cc; 
+                _config.SkipCrystallineConflict = cc;
+                
                 Skippy.Instance.Hooks.RefreshHooks(); 
                 _saveConfig();
             }
@@ -100,7 +102,8 @@ namespace Skippy.UI {
             FeatureCheckbox("##SkipInn", "Enable Inn Skip", "Bypasses the entire Inn Login Sequence. Enable at your own discretion and be aware of the risks.", ref inn, out cutscene3);
 
             if (cutscene3) {
-                _config.SkipInn = inn; 
+                _config.SkipInn = inn;
+                
                 Skippy.Instance.Hooks.RefreshHooks(); 
                 _saveConfig();
             }
