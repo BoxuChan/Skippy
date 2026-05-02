@@ -21,11 +21,11 @@ namespace Skippy.UI {
                     ImGui.TextWrapped(desc);
                 }
 
-                Row("/skippy", "(none)", "Opens the configurations window.");
+                Row("/skippy", "(none)", "Opens the settings window.");
                 Row("/skippy", "on / start / enable", "Enables Skippy.");
                 Row("/skippy", "off / stop / disable", "Disables Skippy.");
-                Row("/skippy", "log / export", "Exports your Dalamud Logs to your Desktop.");
-                Row("/skippy", "territory / zone", "Prints the current territory ID and IntendedUse to chat. Intended for Cutscene Research Help.");
+                Row("/skippy", "log / export", "Exports your Dalamud log to your Desktop.");
+                Row("/skippy", "territory / zone", "Prints the current territory ID and IntendedUse to chat.");
                 Row("/sc", "(none)", "Rolls your sanity check dice.");
 
                 ImGui.EndTable();

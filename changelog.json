@@ -1,14 +1,13 @@
 [
   {
-    "version": "2.2.0.0",
-    "date": "2026-05-01",
+    "version": "2.2.1.0",
+    "date": "2026-05-02",
     "changes": [
-      "Brand new UI, split into categories of skips!",
-      "MSQ Roulette: Per-Dungeon Exemptions so you can enjoy specific dungeons in peace!",
-      "Gold Saucer: Per-Mode Exemptions (Chocobo Racing, Lord of Verminion, Triple Triad, Fall Guys)",
-      "Risky Skips: Ocean Fishing, Crystalline Conflict & Inn Skip (Ban Risk, please beware)",
-      "Auto-Party Mode: Automatically enables MSQ Roulette Skip when in a 4-man Stack!",
-      "IPC: Added some ways for other plugin devs to check Skippy's configurations! "
+      "Skip Categories: Per-Instance toggles now flip between Exemptions and Skip Specific depending on whether Skip All is enabled.",
+      "NPC Dialogue: Added Submarine & Workshop exemption/skip toggle.",
+      "UI: Categories will now display their individual working status (green = active, red = inactive, orange = error).",
+      "Gold Saucer: (Bugfix) Skips will now only happen in Gold Saucer-related territories.",
+      "Gold Saucer: Added Mahjong and Air Force One exemption/skip toggles."
     ]
   }
 ]

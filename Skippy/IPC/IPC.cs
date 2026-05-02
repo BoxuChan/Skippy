@@ -91,6 +91,8 @@ namespace Skippy.IPC {
             ["ExemptVerminion"] = _config.ExemptVerminion,
             ["ExemptTripleTriad"] = _config.ExemptTripleTriad,
             ["ExemptFallGuys"] = _config.ExemptFallGuys,
+            ["ExemptAirForceOne"] = _config.ExemptAirForceOne,
+            ["ExemptMahjong"] = _config.ExemptMahjong,
             ["SkipCustomTalk"] = _config.SkipCustomTalk,
             ["SkipNormalCutscenes"] = _config.SkipNormalCutscenes,
             ["SkipFeedBuddy"] = _config.SkipFeedBuddy,

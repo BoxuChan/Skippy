@@ -24,6 +24,7 @@ namespace Skippy {
         private readonly IPluginLog _pluginLog;
         private readonly IPartyList _partyList;
         private readonly IFramework _framework;
+        
         private int _lastPartySize = -1;
 
         internal readonly SigHooks Hooks;
@@ -48,7 +49,7 @@ namespace Skippy {
             Instance = this;
 
             _pluginInterface = pluginInterface;
-            _commandManager  = commandManager;
+            _commandManager = commandManager;
             _chatGui = chatGui;
             _pluginLog = pluginLog;
             _partyList = partyList;
@@ -56,8 +57,8 @@ namespace Skippy {
 
             _csp = RandomNumberGenerator.Create();
 
-            if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 2) {
-                configuration = new Config { Version = 2 };
+            if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 3) {
+                configuration = new Config { Version = 3 };
             }
 
             _config = configuration;
@@ -81,18 +82,11 @@ namespace Skippy {
                 
                 if (_config.IsEnabled) {
                     Hooks.RefreshHooks();
-                    _chatGui.Print("[Skippy] Plugin has been properly loaded in!");
-                    _chatGui.Print("[Skippy] Plugin has been enabled.");
-                } else {
-                    _chatGui.Print("[Skippy] Plugin has been properly loaded in!");
-                    _chatGui.Print("[Skippy] Plugin is currently disabled. (Tip: Use '/skippy on' or open /skippy)");
                 }
             } else {
                 _pluginLog.Error("Cutscene Offset Not Found.");
                 _pluginLog.Warning("Plugin Disabling...");
-                _chatGui.Print("[Skippy] Plugin has not loaded in properly!");
                 _chatGui.PrintError("[Skippy] Cutscene offsets have not been found! The plugin will not work. Please use '/skippy log' and send the file to the developer.");
-                _chatGui.Print("[Skippy] Plugin has been disabled.");
             }
 
             _commandManager.AddHandler("/skippy", new CommandInfo(OnCommand) {
@@ -127,10 +121,11 @@ namespace Skippy {
         internal void ExportLog() {
             try {
                 var pluginConfig = _pluginInterface.ConfigDirectory;
-                var xivLauncher  = pluginConfig.Parent?.Parent;
+                var xivLauncher = pluginConfig.Parent?.Parent;
 
                 if (xivLauncher == null) {
-                    _chatGui.PrintError("[Skippy] Error: Could not locate XIVLauncher directory."); return;
+                    _chatGui.PrintError("[Skippy] Error: Could not locate XIVLauncher directory."); 
+                    return;
                 }
 
                 var log = Path.Combine(xivLauncher.FullName, "dalamud.log");
@@ -205,13 +200,11 @@ namespace Skippy {
                 case "on": case "start": case "enable":
                     SetPluginState(true);
                     _chatGui.Print("[Skippy] Plugin has been enabled.");
-                    _chatGui.Print("[Skippy] Cutscenes in MSQ Roulette Dungeons/Trial will now be skipped!");
                     break;
                 
                 case "off": case "stop": case "disable":
                     SetPluginState(false);
                     _chatGui.Print("[Skippy] Plugin has been disabled.");
-                    _chatGui.Print("[Skippy] Cutscenes in MSQ Roulette Dungeons/Trial will no longer be skipped!");
                     break;
                 
                 case "log": case "export": case "exportlog":
@@ -224,10 +217,7 @@ namespace Skippy {
                 
                 default:
                     if (string.IsNullOrEmpty(args)) {
-                        _mainUI.IsOpen = !_mainUI.IsOpen;
-                    } else {
-                        TogglePluginState();
-                        _chatGui.Print($"[Skippy] Plugin has been {(_config.IsEnabled ? "enabled" : "disabled")}. (Tip: Use '/skippy on' or '/skippy off')");
+                        _mainUI.IsOpen = true;
                     }
                     break;
             }

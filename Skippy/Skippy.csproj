@@ -5,7 +5,7 @@
         <PackageProjectUrl>https://github.com/BoxuChan/Skippy</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
-        <AssemblyVersion>2.2.0.1</AssemblyVersion>
+        <AssemblyVersion>2.2.1.0</AssemblyVersion>
     </PropertyGroup>
 	<PropertyGroup>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>

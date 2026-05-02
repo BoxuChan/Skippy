@@ -8,6 +8,12 @@ namespace Skippy.Skips {
         private static readonly ushort[] TerritoryPrae = [1044, 1045];
         private static readonly ushort[] TerritoryCastrum = [1043];
         private static readonly ushort[] TerritoryPorta = [1046];
+        private static readonly ushort[] TerritoryMahjong = [831];
+
+        internal unsafe bool IsWorkshopTerritory() {
+            var manager = FFXIVClientStructs.FFXIV.Client.Game.HousingManager.Instance();
+            return manager != null && manager->IsInWorkshop();
+        }
 
         internal TerritoryIntendedUse GetIntendedUse(ushort territoryId) {
             if (_dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(territoryId) is { } row) {
@@ -37,15 +43,13 @@ namespace Skippy.Skips {
                 return true;
             }
 
-            switch (_config.SkipCrystallineConflict)
-            {
+            switch (_config.SkipCrystallineConflict) {
                 case false when use == TerritoryIntendedUse.CrystallineConflict:
                 case false when use == TerritoryIntendedUse.CrystallineConflictCustomMatch:
                     return true;
             }
 
-            switch (use)
-            {
+            switch (use) {
                 case TerritoryIntendedUse.Frontline:
                 case TerritoryIntendedUse.RivalWings:
                     return true;
@@ -71,19 +75,19 @@ namespace Skippy.Skips {
                 return true;
             }
 
-            if (_config.ExemptTripleTriad && use == TerritoryIntendedUse.TripleTriadBattlehall) {
-                return true;
-            }
-
-            if (_config.ExemptTripleTriad && use == TerritoryIntendedUse.TripleTriadOpenTournament) {
-                return true;
-            }
-
-            if (_config.ExemptTripleTriad && use == TerritoryIntendedUse.TripleTriadInvitationalParlor) {
+            if (_config.ExemptTripleTriad && (use == TerritoryIntendedUse.TripleTriadBattlehall || use == TerritoryIntendedUse.TripleTriadOpenTournament || use == TerritoryIntendedUse.TripleTriadInvitationalParlor)) {
                 return true;
             }
 
             if (_config.ExemptFallGuys && use == TerritoryIntendedUse.Blunderville) {
+                return true;
+            }
+
+            if (_config.ExemptAirForceOne && use == TerritoryIntendedUse.AirForceOne) {
+                return true;
+            }
+
+            if (_config.ExemptMahjong && System.Array.IndexOf(TerritoryMahjong, territory) >= 0) {
                 return true;
             }
 
