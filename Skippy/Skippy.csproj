@@ -19,5 +19,9 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>README.md</TargetPath>
 		</Content>
+		<Content Include="..\changelog.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>changelog.json</TargetPath>
+		</Content>
 	</ItemGroup>
 </Project>
