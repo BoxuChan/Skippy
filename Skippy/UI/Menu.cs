@@ -48,7 +48,7 @@ namespace Skippy.UI {
             _tex = tex;
 
             SizeConstraints = new WindowSizeConstraints {
-                MinimumSize = new Vector2(700, 500),
+                MinimumSize = new Vector2(550, 450),
                 MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
             };
 
@@ -107,13 +107,27 @@ namespace Skippy.UI {
                 ImGui.TableSetupColumn("##Menu", ImGuiTableColumnFlags.WidthFixed, 200f);
                 ImGui.TableSetupColumn("##Content", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableNextColumn();
-                if (ImGui.BeginChild("##Categories", new Vector2(0, topHeight), false, ImGuiWindowFlags.NoDecoration)) {
-                    DrawPowerButton();
 
-                    ImGui.Spacing();
-                    ImGui.Separator();
-                    ImGui.Spacing();
+                var beforePowerY = ImGui.GetCursorPosY();
 
+                DrawPowerButton();
+
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                var topUsed = ImGui.GetCursorPosY() - beforePowerY;
+
+                ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarSize, 14f);
+                ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarRounding, 6f);
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarBg, new Vector4(0.06f, 0.06f, 0.12f, 0.90f));
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarGrab, new Vector4(0.32f, 0.32f, 0.70f, 0.95f));
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, new Vector4(0.45f, 0.45f, 0.90f, 1.00f));
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, new Vector4(0.60f, 0.60f, 1.00f, 1.00f));
+
+                var menuFlags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse;
+
+                if (ImGui.BeginChild("##Categories", new Vector2(0, topHeight - topUsed), false, menuFlags)) {
                     bool error = !Skippy.Instance.Address.Valid;
                     NavItem("MSQ Roulette", Category.MSQRoulette, _config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta, error);
                     NavItem("Large-Scale Content", Category.MassivePC, _config.SkipMassivePC, error);
@@ -199,10 +213,21 @@ namespace Skippy.UI {
                 }
                 
                 ImGui.EndChild();
+
+                ImGui.PopStyleColor(4);
+                ImGui.PopStyleVar(2);
+
                 ImGui.TableNextColumn();
 
-                var flags = ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysVerticalScrollbar;
-                
+                var flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysVerticalScrollbar;
+
+                ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarSize, 14f);
+                ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarRounding, 6f);
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarBg, new Vector4(0.06f, 0.06f, 0.12f, 0.90f));
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarGrab, new Vector4(0.32f, 0.32f, 0.70f, 0.95f));
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, new Vector4(0.45f, 0.45f, 0.90f, 1.00f));
+                ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, new Vector4(0.60f, 0.60f, 1.00f, 1.00f));
+
                 if (ImGui.BeginChild("##Skips", new Vector2(0, topHeight), false, flags)) {
                     ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(10f, 8f));
                     ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X - 20f);
@@ -264,13 +289,16 @@ namespace Skippy.UI {
                         ImGui.EndDisabled();
                     }
 
-                    ImGui.Spacing(); 
+                    ImGui.Spacing();
                     ImGui.Spacing();
                     ImGui.EndGroup();
                     ImGui.PopItemWidth();
                 }
-                
+
                 ImGui.EndChild();
+
+                ImGui.PopStyleColor(4);
+                ImGui.PopStyleVar(2);
             } catch (Exception e) {
                 ImGui.TextColored(new Vector4(1, 0.3f, 0.3f, 1), $"UI Error: {e.Message}");
             }
@@ -366,9 +394,9 @@ namespace Skippy.UI {
             const float button = 120f;
             var width = ImGui.GetContentRegionAvail().X;
 
-            ImGui.Spacing(); 
             ImGui.Spacing();
-            ImGui.SetCursorPosX((width - button) * 0.5f);
+            ImGui.Spacing();
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (width - button) * 0.5f);
 
             bool hasError = !Skippy.Instance.Address.Valid;
             var tint = hasError ? new Vector4(1.0f, 0.55f, 0.10f, 1.00f) : _config.IsEnabled ? new Vector4(1f, 1f, 1f, 1f) : new Vector4(0.30f, 0.30f, 0.30f, 0.80f);
