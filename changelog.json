@@ -3,13 +3,14 @@
     "version": "2.2.2.0",
     "date": "2026-05-04",
     "changes": [
-      "Auto-Party Mode: Skip now only enables when your queue pops for an MSQ duty in a premade party of 4, and disables when you leave the instance.",
+      "Auto-Party Mode: (Bugfix) Skip now only enables when your queue pops for an MSQ duty in a premade party of 4, and disables when you leave the instance.",
       "Auto-Party Mode: Unrestricted Party queues into Castrum Meridianum, The Praetorium, or Porta Decumana now always enable the skip regardless of party size.",
       "Submarine & Workshop: (Bugfix) Signature Hook has been corrected to properly skip the cutscenes.",
       "World Cutscenes: (Bugfix) Ocean Fishing cutscenes will no longer be accidentally skipped by this category (See Risky Skips Category instead).",
       "IPC: GetSkippedCategories now returns SkippedCategory[] (enum) instead of string[].",
       "UI: Clicking the label next to any checkbox now toggles the skip just like when clicking the checkbox itself.",
-      "UI: The MSQ Roulette Status circle now turns yellow when Auto-Party Mode is active."
+      "UI: The MSQ Roulette Status circle now turns yellow when Auto-Party Mode is active.",
+      "UI: Reduced Minimum Size and added a scrollbar to the category list."
     ]
   }
 ]
