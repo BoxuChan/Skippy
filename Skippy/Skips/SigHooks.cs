@@ -21,7 +21,7 @@ namespace Skippy.Skips {
 
         private static readonly HttpClient Http = new();
 
-        private const string DocURL = "https://script.google.com/macros/s/AKfycbw2STdnyJEmj1CTJi05wiN6UQSHT2CixdbravhTeY-vuFufw1EHZHGtLu2M81Pfb9HJww/exec";
+        private const string DocURL = "https://script.google.com/macros/s/AKfycbwHPFG5hb8wQUKOSl60pnASLwrqhACP2nshiGh6iAbg6ftei3PZs4YTi1DhcSreV4tQBA/exec";
 
         private Hook<UIState.Delegates.IsCutsceneSeen>? _cutsceneSeenHook;
         private Hook<ContentDirectorDelegate>? _msqHook;
@@ -55,7 +55,7 @@ namespace Skippy.Skips {
             bool exempt = IsExemptedTerritory((ushort)_clientState.TerritoryType);
             SetEnabled(_config.IsEnabled && !exempt);
 
-            bool msq = _config.IsEnabled && (_config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta);
+            bool msq = _config.IsEnabled && (_config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta || _config.ResearchMSQHook);
             const string msqSig = "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 84 99 ?? ?? ?? ??";
 
             if (msq) {
@@ -73,20 +73,20 @@ namespace Skippy.Skips {
                 _msqHook?.Disable();
             }
 
-            RefreshContentDirectorHook(ref _massivePCHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 8B 11", _config.IsEnabled && _config.SkipMassivePC, ExemptionMassivePC);
+            RefreshContentDirectorHook(ref _massivePCHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 8B 11", _config.IsEnabled && (_config.SkipMassivePC || _config.ResearchMassivePCHook), ExemptionMassivePC);
 
             bool goldSaucer = _config.IsEnabled && (_config.SkipGoldSaucer
                 || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys
-                || _config.ExemptAirForceOne || _config.ExemptMahjong);
+                || _config.ExemptAirForceOne || _config.ExemptMahjong || _config.ResearchGoldSaucerHook);
             RefreshContentDirectorHook(ref _goldSaucerHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 84 99 ?? ?? ?? ??", goldSaucer, ExemptionGoldSaucer);
 
-            RefreshContentDirectorHook(ref _customTalkHook, "48 83 EC 58 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 85 C9 74 06", _config.IsEnabled && (_config.SkipCustomTalk || _config.ExemptSubmarines), ExemptionCustomTalk);
+            RefreshContentDirectorHook(ref _customTalkHook, "48 83 EC 58 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 85 C9 74 06", _config.IsEnabled && (_config.SkipCustomTalk || _config.ResearchCustomTalkHook), ExemptionCustomTalk);
 
-            RefreshNormalCutscenesHook(_config.IsEnabled && _config.SkipNormalCutscenes);
-            
-            RefreshInnHook(_config.IsEnabled && _config.SkipInn);
-            
-            RefreshFeedBuddyHook(_config.IsEnabled && _config.SkipFeedBuddy);
+            RefreshNormalCutscenesHook(_config.IsEnabled && (_config.SkipNormalCutscenes || _config.ExemptSubmarines || _config.ResearchNormalCutscenesHook));
+
+            RefreshInnHook(_config.IsEnabled && (_config.SkipInn || _config.ResearchInnHook));
+
+            RefreshFeedBuddyHook(_config.IsEnabled && (_config.SkipFeedBuddy || _config.ResearchFeedBuddyHook));
         }
 
         private void RefreshContentDirectorHook(ref Hook<ContentDirectorDelegate>? hook, string sig, bool enable, ContentDirectorDelegate? exempt = null) {
@@ -131,7 +131,7 @@ namespace Skippy.Skips {
             if (enable) {
                 if (_innHook == null) {
                     try {
-                        _innHook = _gameInteropProvider.HookFromSignature<SinglePtrDelegate>(sig, _ => 1L);
+                        _innHook = _gameInteropProvider.HookFromSignature<SinglePtrDelegate>(sig, ExemptionInn);
                         _innHook.Enable();
                     } catch (Exception e) {
                         _pluginLog.Warning(e, "Couldn't find the Inn hook signature. The Skip for the Inn won't work.");
@@ -150,7 +150,7 @@ namespace Skippy.Skips {
             if (enable) {
                 if (_feedBuddyHook == null) {
                     try {
-                        _feedBuddyHook = _gameInteropProvider.HookFromSignature<SinglePtrDelegate>(sig, _ => 1L);
+                        _feedBuddyHook = _gameInteropProvider.HookFromSignature<SinglePtrDelegate>(sig, ExemptionFeedBuddy);
                         _feedBuddyHook.Enable();
                     } catch (Exception e) {
                         _pluginLog.Warning(e, "Couldn't find the Feed Buddy hook signature. The Skip for the Feed Buddy Animation won't work.");
@@ -197,17 +197,29 @@ namespace Skippy.Skips {
             }
         }
 
+        private const string Version = "2.2.2.0";
+
+        internal static async Task<string> FetchPassword() {
+            try {
+                var url = DocURL + "?action=getPassword";
+                return (await Http.GetStringAsync(url).ConfigureAwait(false)).Trim();
+            } catch {
+                return string.Empty;
+            }
+        }
+
         private void LogToSheet(string hook, ushort territory, string placeName, TerritoryIntendedUse intendedUse) {
+            bool isDev = hook.StartsWith("Research_");
+            
             _ = Task.Run(async () => {
                 try {
-                    var json = $"{{\"hook\":\"{hook}\",\"territory\":{territory},\"place\":\"{placeName}\",\"intendedUse\":\"{intendedUse}\",\"time\":\"{DateTime.UtcNow:u}\"}}";
+                    var json = $"{{\"hook\":\"{hook}\",\"territory\":{territory},\"place\":\"{placeName}\",\"intendedUse\":\"{intendedUse}\",\"time\":\"{DateTime.UtcNow:u}\",\"version\":\"{Version}\",\"devMode\":{(isDev ? "true" : "false")}}}";
                     await Http.PostAsync(DocURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
                 } catch { }
             });
         }
 
-        private void LogExemption(string hook)
-        {
+        private void LogExemption(string hook) {
             var territory = (ushort)_clientState.TerritoryType;
             var use = GetIntendedUse(territory);
             var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";

@@ -76,7 +76,7 @@ namespace Skippy.UI {
                         i++;
 
                         if (inIpc) {
-                            _ipcCode = string.Join("\n", code);
+                            // silently consume — already handled by the ### lookahead
                         } else {
                             ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.60f, 0.85f, 1.00f, 1f));
 
@@ -200,6 +200,11 @@ namespace Skippy.UI {
                     continue;
                 }
 
+                if (inIpc && string.IsNullOrWhiteSpace(line)) {
+                    i++;
+                    continue;
+                }
+
                 if (line.StartsWith("- ") || line.StartsWith("* ")) {
                     ImGui.Bullet(); 
                     ImGui.SameLine();
@@ -260,6 +265,9 @@ namespace Skippy.UI {
                     ImGui.TextUnformatted(_ipcCode);
                     ImGui.PopStyleColor();
                 }
+
+                if (ImGui.IsItemClicked())
+                    ImGui.SetClipboardText(_ipcCode);
                 
                 _ipcCode = null;
             }

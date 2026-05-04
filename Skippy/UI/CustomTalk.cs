@@ -42,6 +42,8 @@ namespace Skippy.UI {
                 Skippy.Instance.Hooks.RefreshHooks();
                 _saveConfig();
             }
+
+            WipToggle(skipAll ? "Exempt: Grand Company Rankup" : "Skip: Grand Company Rankup");
         }
     }
 }

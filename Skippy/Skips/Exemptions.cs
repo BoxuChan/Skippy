@@ -27,6 +27,11 @@ namespace Skippy.Skips {
 
             bool inMSQTerritory = Array.IndexOf(TerritoryPrae, territory) >= 0 || Array.IndexOf(TerritoryCastrum, territory) >= 0 || Array.IndexOf(TerritoryPorta, territory) >= 0;
 
+            if (_config.ResearchMSQHook) {
+                LogExemption("Research_MSQHook");
+                return 1L;
+            }
+
             if (_config.SkipMSQRoulette) {
                 if (!inMSQTerritory) {
                     return _msqHook!.Original(luaState);
@@ -64,6 +69,11 @@ namespace Skippy.Skips {
         private long ExemptionGoldSaucer(nint luaState) {
             var territory = (ushort)_clientState.TerritoryType;
             var use = GetIntendedUse(territory);
+
+            if (_config.ResearchGoldSaucerHook) {
+                LogExemption("Research_GoldSaucerHook");
+                return 1L;
+            }
 
             if (_config.SkipGoldSaucer) {
                 if (System.Array.IndexOf(GoldSaucerIntendedUses, use) < 0) {
@@ -144,21 +154,19 @@ namespace Skippy.Skips {
         }
 
         private long ExemptionMassivePC(nint luaState) {
+            if (_config.ResearchMassivePCHook) {
+                LogExemption("Research_MassivePCHook");
+                return 1L;
+            }
+            
             LogExemption("MassivePC"); 
             return 1L;
         }
 
         private long ExemptionCustomTalk(nint luaState) {
-            bool isWorkshop = IsWorkshopTerritory();
-
-            if (_config.SkipCustomTalk) {
-                if (_config.ExemptSubmarines && isWorkshop) {
-                    return _customTalkHook!.Original(luaState);
-                }
-            } else {
-                if (!(_config.ExemptSubmarines && isWorkshop)) {
-                    return _customTalkHook!.Original(luaState);
-                }
+            if (_config.ResearchCustomTalkHook) {
+                LogExemption("Research_CustomTalkHook");
+                return 1L;
             }
 
             LogExemption("CustomTalk");
@@ -166,7 +174,44 @@ namespace Skippy.Skips {
         }
 
         private long ExemptionNormalCutscenes(nint luaState1, nint luaState2) {
-            LogExemption("NormalCutscenes"); 
+            if (_config.ResearchNormalCutscenesHook) {
+                LogExemption("Research_NormalCutscenesHook");
+                return 1L;
+            }
+
+            bool isWorkshop = IsWorkshopTerritory();
+            var use = GetIntendedUse((ushort)_clientState.TerritoryType);
+
+            if (use == TerritoryIntendedUse.OceanFishing && !_config.SkipOceanFishing)
+                return _normalCutscenesHook!.Original(luaState1, luaState2);
+
+            if (_config.SkipNormalCutscenes) {
+                if (_config.ExemptSubmarines && isWorkshop) {
+                    return _normalCutscenesHook!.Original(luaState1, luaState2);
+                }
+            } else {
+                if (!(_config.ExemptSubmarines && isWorkshop)) {
+                    return _normalCutscenesHook!.Original(luaState1, luaState2);
+                }
+            }
+
+            LogExemption("NormalCutscenes");
+            return 1L;
+        }
+
+        private long ExemptionInn(nint luaState) {
+            if (_config.ResearchInnHook) {
+                LogExemption("Research_InnHook");
+            }
+            
+            return 1L;
+        }
+
+        private long ExemptionFeedBuddy(nint luaState) {
+            if (_config.ResearchFeedBuddyHook) {
+                LogExemption("Research_FeedBuddyHook");
+            }
+            
             return 1L;
         }
     }

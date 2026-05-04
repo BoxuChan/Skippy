@@ -5,7 +5,7 @@ namespace Skippy.UI {
         private void UIAutoParty() {
             SectionHeader("Auto-Party Mode");
             
-            ImGui.TextWrapped("When your party reaches 4 players, the MSQ Roulette Skip will be automatically enabled, if going below that player count, it will be disabled automatically so you don't take the risk of skipping cutscenes in a party without your friends, or a group that may not have Skippy and get you reported!");
+            ImGui.TextWrapped("When you queue for an MSQ Roulette duty in a premade party of 4 and the queue pops, the MSQ Roulette Skip will be enabled automatically. Once you leave the instance, it will be disabled again ; that way, you don't have to take any risk of skipping cutscenes without people you trust, or in a group that may not have Skippy and get you reported!");
             
             ImGui.Spacing(); 
             ImGui.Spacing();
@@ -13,11 +13,21 @@ namespace Skippy.UI {
             bool changed = false;
             bool autoEnable = _config.AutoEnable4Man;
             
-            FeatureCheckbox("##AutoEnable4Man", "Auto-Enable MSQ Roulette Skip in 4-man Party", "You must be in a party of 4 for this to work, if not, the MSQ Roulette Skip will always be disabled.", ref autoEnable, out changed);
+            FeatureCheckbox("##AutoEnable4Man", "Auto-Enable MSQ Roulette Skip in 4-man Party", "When your queue pops for Castrum Meridianum, The Praetorium, Porta Decumana, or MSQ Roulette while in a premade party of 4, the skip will be enabled automatically. It will disable itself again once you leave the instance.", ref autoEnable, out changed);
             
             if (changed) {
                 _config.AutoEnable4Man = autoEnable;
-                
+
+                if (autoEnable) {
+                    _config.SkipMSQRoulette = false;
+                    _config.ExemptPrae = false;
+                    _config.ExemptCastrum = false;
+                    _config.ExemptPorta = false;
+                    
+                    Skippy.Instance.Hooks.RefreshHooks();
+                    Skippy.Instance.PrintChat("[Skippy] Auto-Party Mode Enabled - The skip will now only activate when queuing into MSQ Roulette duties.");
+                }
+
                 Skippy.Instance.SaveConfig();
             }
 

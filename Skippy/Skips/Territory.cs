@@ -5,9 +5,9 @@ using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryInte
 
 namespace Skippy.Skips {
     internal partial class SigHooks {
-        private static readonly ushort[] TerritoryPrae = [1044, 1045];
-        private static readonly ushort[] TerritoryCastrum = [1043];
-        private static readonly ushort[] TerritoryPorta = [1046];
+        internal static readonly ushort[] TerritoryPrae = [1044, 1045];
+        internal static readonly ushort[] TerritoryCastrum = [1043];
+        internal static readonly ushort[] TerritoryPorta = [1046];
         private static readonly ushort[] TerritoryMahjong = [831];
 
         internal unsafe bool IsWorkshopTerritory() {

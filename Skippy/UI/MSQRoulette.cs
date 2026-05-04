@@ -36,7 +36,7 @@ namespace Skippy.UI {
                 ImGui.Spacing();
                 
                 ImGui.PushStyleColor(ImGuiCol.Text, new System.Numerics.Vector4(0.65f, 0.65f, 0.40f, 1f));
-                ImGui.TextWrapped("Auto-Party Mode is currently active — This section is so on managed automatically and cannot be edited manually.\n\n" + "Disable Auto-Party Mode in the Auto-Party Mode category to regain control and be able to pick options here.");
+                ImGui.TextWrapped("Auto-Party Mode is currently active - This section so on managed automatically and cannot be edited manually.\n\n" + "Disable Auto-Party Mode in the Auto-Party Mode category to regain control and be able to pick options here.");
                 ImGui.PopStyleColor();
                 
                 ImGui.Spacing();
