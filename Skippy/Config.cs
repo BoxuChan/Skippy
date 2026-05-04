@@ -2,9 +2,32 @@ using System;
 using Dalamud.Configuration;
 
 namespace Skippy {
+    public enum SkippedCategory {
+        IsEnabled,
+        AutoEnable4Man,
+        SkipMSQRoulette,
+        ExemptPrae,
+        ExemptCastrum,
+        ExemptPorta,
+        SkipMassivePC,
+        SkipGoldSaucer,
+        ExemptChocoboRacing,
+        ExemptVerminion,
+        ExemptTripleTriad,
+        ExemptFallGuys,
+        ExemptAirForceOne,
+        ExemptMahjong,
+        SkipCustomTalk,
+        SkipNormalCutscenes,
+        SkipFeedBuddy,
+        SkipOceanFishing,
+        SkipCrystallineConflict,
+        SkipInn,
+    }
+
     [Serializable]
     public class Config : IPluginConfiguration {
-        public int Version { get; set; } = 3;
+        public int Version { get; set; } = 4;
 
         public bool IsEnabled { get; set; } = true;
 
@@ -28,6 +51,16 @@ namespace Skippy {
         public bool ExemptSubmarines { get; set; } = false;
         
         public bool SkipNormalCutscenes { get; set; } = false;
+
+        public bool DevMode { get; set; } = false;
+        public string DevPassword { get; set; } = string.Empty;
+        public bool ResearchMSQHook { get; set; } = false;
+        public bool ResearchMassivePCHook { get; set; } = false;
+        public bool ResearchGoldSaucerHook { get; set; } = false;
+        public bool ResearchCustomTalkHook { get; set; } = false;
+        public bool ResearchNormalCutscenesHook { get; set; } = false;
+        public bool ResearchInnHook { get; set; } = false;
+        public bool ResearchFeedBuddyHook { get; set; } = false;
 
         public bool SkipFeedBuddy { get; set; } = false;
 

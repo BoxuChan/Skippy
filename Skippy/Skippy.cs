@@ -3,8 +3,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
+using Lumina.Excel.Sheets;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Skippy.Skips;
@@ -23,9 +25,10 @@ namespace Skippy {
         private readonly IChatGui _chatGui;
         private readonly IPluginLog _pluginLog;
         private readonly IPartyList _partyList;
-        private readonly IFramework _framework;
+        private readonly IClientState _clientState;
         
-        private int _lastPartySize = -1;
+        internal bool _devModeValid { get; private set; } = false;
+        private bool _autoPartyActive;
 
         internal readonly SigHooks Hooks;
         private readonly IPC.IPC _IPC;
@@ -44,8 +47,7 @@ namespace Skippy {
             ITextureProvider textureProvider,
             IClientState clientState,
             IDataManager dataManager,
-            IPartyList partyList,
-            IFramework framework) {
+            IPartyList partyList) {
             Instance = this;
 
             _pluginInterface = pluginInterface;
@@ -53,17 +55,25 @@ namespace Skippy {
             _chatGui = chatGui;
             _pluginLog = pluginLog;
             _partyList = partyList;
-            _framework = framework;
+            _clientState = clientState;
 
             _csp = RandomNumberGenerator.Create();
 
-            if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 3) {
-                configuration = new Config { Version = 3 };
+            if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 4) {
+                configuration = new Config { Version = 4 };
+                
+                _chatGui.Print("[Skippy] Your configuration was from an older version and has been reset to defaults. Please re-apply your settings.");
             }
 
             _config = configuration;
             Address = new CutsceneAddressResolver(_pluginLog, sigScanner);
             Hooks = new SigHooks(_config, _pluginLog, gameInteropProvider, clientState, dataManager, Address);
+
+            if (_config.DevMode) {
+                _ = DevValidation();
+            } else {
+                _devModeValid = true;
+            }
 
             _IPC = new IPC.IPC(_pluginInterface, _config);
             _mainUI = new Menu(_config, Hooks.SetEnabled, SaveConfig, _pluginInterface, textureProvider);
@@ -73,9 +83,8 @@ namespace Skippy {
             _pluginInterface.UiBuilder.OpenConfigUi += OpenConfigUi;
             _pluginInterface.UiBuilder.OpenMainUi += OpenConfigUi;
             
-            clientState.TerritoryChanged += Hooks.OnTerritoryChanged;
-            
-            _framework.Update += OnFrameworkUpdate;
+            clientState.TerritoryChanged += OnTerritoryChanged;
+            clientState.CfPop += OnCfPop;
 
             if (Address.Valid) {
                 _pluginLog.Information("Cutscene Offset Found.");
@@ -107,7 +116,9 @@ namespace Skippy {
             
             _windowSystem.RemoveAllWindows();
             _mainUI.Dispose();
-            _framework.Update -= OnFrameworkUpdate;
+            
+            _clientState.TerritoryChanged -= OnTerritoryChanged;
+            _clientState.CfPop -= OnCfPop;
 
             _commandManager.RemoveHandler("/skippy");
             _commandManager.RemoveHandler("/sc");
@@ -115,8 +126,78 @@ namespace Skippy {
             _csp?.Dispose();
             GC.SuppressFinalize(this);
         }
-
+        
         internal void SaveConfig() => _pluginInterface.SavePluginConfig(_config);
+        
+        internal void PrintChat(string message) => _chatGui.Print(message);
+        
+        internal void PrintError(string message) => _chatGui.PrintError(message);
+        
+        internal void PrintSuccess(string message) {
+            var msg = new Dalamud.Game.Text.SeStringHandling.SeStringBuilder().AddUiForeground(message, 72).Build();
+            _chatGui.Print(msg);
+        }
+        
+        internal async Task DevValidation() {
+            bool copyMSQ = _config.ResearchMSQHook;
+            bool copyMassivePC = _config.ResearchMassivePCHook;
+            bool copyGoldSaucer = _config.ResearchGoldSaucerHook;
+            bool copyCustomTalk = _config.ResearchCustomTalkHook;
+            bool copyNormalCutscenes = _config.ResearchNormalCutscenesHook;
+            bool copyInn = _config.ResearchInnHook;
+            bool copyFeedBuddy = _config.ResearchFeedBuddyHook;
+
+            _config.ResearchMSQHook = false;
+            _config.ResearchMassivePCHook = false;
+            _config.ResearchGoldSaucerHook = false;
+            _config.ResearchCustomTalkHook = false;
+            _config.ResearchNormalCutscenesHook = false;
+            _config.ResearchInnHook = false;
+            _config.ResearchFeedBuddyHook = false;
+            
+            Hooks.RefreshHooks();
+
+            var password = await SigHooks.FetchPassword().ConfigureAwait(false);
+            
+            if (!string.IsNullOrEmpty(password) && _config.DevPassword == password) {
+                _config.ResearchMSQHook = copyMSQ;
+                _config.ResearchMassivePCHook = copyMassivePC;
+                _config.ResearchGoldSaucerHook = copyGoldSaucer;
+                _config.ResearchCustomTalkHook = copyCustomTalk;
+                _config.ResearchNormalCutscenesHook = copyNormalCutscenes;
+                _config.ResearchInnHook = copyInn;
+                _config.ResearchFeedBuddyHook = copyFeedBuddy;
+                
+                Hooks.RefreshHooks();
+            } else {
+                _config.DevMode = false;
+                _config.DevPassword = string.Empty;
+                _pluginInterface.SavePluginConfig(_config);
+                
+                _chatGui.PrintError("[Skippy] Nice try, but you cannot simply access Developer Tools by just trying to put in a password in the config file. If you don't have the right password, it's because you're not supposed to have it!");
+                _mainUI.ResetCategory();
+            }
+            
+            _devModeValid = true;
+        }
+
+        internal async Task TryEnableDevMode(string input) {
+            var password = await SigHooks.FetchPassword().ConfigureAwait(false);
+            
+            if (!string.IsNullOrEmpty(password) && input.Trim() == password) {
+                _config.DevMode = true;
+                _config.DevPassword = password;
+                _pluginInterface.SavePluginConfig(_config);
+                
+                PrintSuccess("[Skippy] Developer Mode has been enabled. Please remember to only use the research hooks during active testing and to disable them afterwards - leaving them on permanently may be dangerous for your account.");
+            } else {
+                _config.DevMode = false;
+                _config.DevPassword = string.Empty;
+                _pluginInterface.SavePluginConfig(_config);
+                
+                _chatGui.PrintError("[Skippy] The entered Developer Mode password is incorrect. Developer Mode has not been enabled.");
+            }
+        }
 
         internal void ExportLog() {
             try {
@@ -146,29 +227,48 @@ namespace Skippy {
             }
         }
 
-        private void OnFrameworkUpdate(IFramework framework) {
+        private void OnCfPop(ContentFinderCondition condition) {
             if (!_config.AutoEnable4Man) {
                 return;
             }
 
-            var size = _partyList.Length;
-            
-            if (size == _lastPartySize) {
+            bool isDirectMSQ = condition.RowId == 15 || condition.RowId == 16 || condition.RowId == 830;
+            bool isMSQRoulette = condition.RowId == 0;
+
+            if (isDirectMSQ && condition.AllowUndersized) {
+                // Unrestricted Mode - Always skip no matter the size of the party
+            } else if ((isDirectMSQ || isMSQRoulette) && _partyList.Length == 4) {
+                // Forcefully require to be in a party with 3 other players (4-man stack)
+            } else {
                 return;
             }
-            
-            _lastPartySize = size;
 
-            if (size == 4 && !_config.SkipMSQRoulette) {
+            if (!_config.SkipMSQRoulette) {
                 _config.SkipMSQRoulette = true;
+                _autoPartyActive = true;
                 Hooks.RefreshHooks();
                 _pluginInterface.SavePluginConfig(_config);
-                _chatGui.Print("[Skippy] Auto-Party: 4-man Stack Detected — MSQ Roulette Skip has been enabled.");
-            } else if (size != 4 && _config.SkipMSQRoulette) {
+            }
+        }
+
+        private void OnTerritoryChanged(uint territory) {
+            Hooks.OnTerritoryChanged(territory);
+
+            if (!_autoPartyActive) {
+                return;
+            }
+
+            bool inMSQ = System.Array.IndexOf(SigHooks.TerritoryPrae, (ushort)territory) >= 0 || System.Array.IndexOf(SigHooks.TerritoryCastrum, (ushort)territory) >= 0 || System.Array.IndexOf(SigHooks.TerritoryPorta, (ushort)territory) >= 0;
+
+            if (inMSQ) {
+                _chatGui.Print("[Skippy] Auto-Party: Entered MSQ Instance with a Premade Light Party - MSQ Roulette Skip will be active.");
+            } else {
+                _autoPartyActive = false;
                 _config.SkipMSQRoulette = false;
+                
                 Hooks.RefreshHooks();
                 _pluginInterface.SavePluginConfig(_config);
-                _chatGui.Print("[Skippy] Auto-Party: Party no longer has 4 players — MSQ Roulette Skip has been disabled.");
+                _chatGui.Print("[Skippy] Auto-Party: Left MSQ Instance - MSQ Roulette Skip is back to being disabled.");
             }
         }
 

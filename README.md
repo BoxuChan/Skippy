@@ -67,7 +67,11 @@ Some people like taking risks when playing the game just for the sake of going f
 
 ## Auto-Party Mode
 
-I added an extra mode to Skippy, that lets you **Auto-Enable MSQ Roulette Skip while in a 4-man Party**! When enabled, Skippy will automatically enable the MSQ Roulette skip when your party has exactly 4 players, and disable itself when the party drops below 4. It does make you unable to change the settings in MSQ Roulette Skips though, to ensure it runs fine!
+I added an extra mode to Skippy, that lets you **Auto-Enable MSQ Roulette Skip for 4-man MSQ runs**! When enabled, Skippy watches for your duty queue to pop. If you're in a premade party of 4 and the duty is Castrum Meridianum, The Praetorium, Porta Decumana, or Duty Roulette: Main Scenario, it will automatically enable the MSQ Roulette skip. Once you leave the instance, it will disable itself again. It locks the MSQ Roulette settings while active to ensure everything runs cleanly.
+
+If you queue directly into Castrum Meridianum, The Praetorium, or Porta Decumana in **Unrestricted Party** mode, the skip will enable regardless of your premade party's size, since Duty Roulette cannot be queued in Unrestricted.
+
+Enabling Auto-Party Mode will also clear your existing MSQ Roulette settings to avoid conflicts with the automatic management.
 
 ## IPC
 
@@ -80,14 +84,39 @@ Returns whether Skippy is currently enabled or not.
 var isEnabled = pluginInterface.GetIpcSubscriber<bool>("Skippy.IsEnabled").InvokeFunc();
 ```
 
-### `Skippy.GetSkippedCategories` → `string[]`
-Returns the names of all the categories of skips that are currently active.
+### `Skippy.GetSkippedCategories` → `SkippedCategory[]`
+Returns all the categories of skips that are currently active as an enum array.
 
 ```csharp
-var categories = pluginInterface.GetIpcSubscriber<string[]>("Skippy.GetSkippedCategories").InvokeFunc();
+var categories = pluginInterface.GetIpcSubscriber<SkippedCategory[]>("Skippy.GetSkippedCategories").InvokeFunc();
 ```
 
-Possible keys: `IsEnabled`, `AutoEnable4Man`, `SkipMSQRoulette`, `ExemptPrae`, `ExemptCastrum`, `ExemptPorta`, `SkipMassivePC`, `SkipGoldSaucer`, `ExemptChocoboRacing`, `ExemptVerminion`, `ExemptTripleTriad`, `ExemptFallGuys`, `ExemptAirForceOne`, `ExemptMahjong`, `SkipCustomTalk`, `SkipNormalCutscenes`, `SkipFeedBuddy`, `SkipOceanFishing`, `SkipCrystallineConflict`, `SkipInn`.
+The `SkippedCategory` enum contains the following values:
+
+```csharp
+public enum SkippedCategory {
+    IsEnabled,
+    AutoEnable4Man,
+    SkipMSQRoulette,
+    ExemptPrae,
+    ExemptCastrum,
+    ExemptPorta,
+    SkipMassivePC,
+    SkipGoldSaucer,
+    ExemptChocoboRacing,
+    ExemptVerminion,
+    ExemptTripleTriad,
+    ExemptFallGuys,
+    ExemptAirForceOne,
+    ExemptMahjong,
+    SkipCustomTalk,
+    SkipNormalCutscenes,
+    SkipFeedBuddy,
+    SkipOceanFishing,
+    SkipCrystallineConflict,
+    SkipInn,
+}
+```
 
 ### `Skippy.GetConfig` → `Dictionary<string, bool>`
 Returns the full configuration information of Skippy as a key/value map.
