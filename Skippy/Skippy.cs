@@ -61,6 +61,7 @@ namespace Skippy {
 
             if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 4) {
                 configuration = new Config { Version = 4 };
+                _pluginInterface.SavePluginConfig(configuration);
                 
                 _chatGui.Print("[Skippy] Your configuration was from an older version and has been reset to defaults. Please re-apply your settings.");
             }
