@@ -28,12 +28,74 @@ namespace Skippy.Skips {
                 return;
             }
             
+            if (_config.ResearchExtraLogs) {
+                var use = GetIntendedUse((ushort)territory);
+                var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault((ushort)territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
+                _pluginLog.Information("[Skippy] TerritoryChanged: id={0} name={1} intendedUse={2} ({3})", territory, name, use, (byte)use);
+            }
+            
             bool exempt = IsExemptedTerritory((ushort)territory);
-            SetEnabled(!exempt);
+            SetEnabled(!exempt && ShouldPatchMemory());
             
             if (!exempt) {
                 RefreshHooks();
             }
+        }
+
+        internal bool ShouldPatchMemory() {
+            var territory = (ushort)_clientState.TerritoryType;
+            var use = GetIntendedUse(territory);
+            bool inMSQ = System.Array.IndexOf(TerritoryPrae, territory) >= 0 || System.Array.IndexOf(TerritoryCastrum, territory) >= 0 || System.Array.IndexOf(TerritoryPorta, territory) >= 0;
+
+            if (_config.SkipMSQRoulette && inMSQ) {
+                return true;
+            }
+
+            if (_config.SkipOceanFishing && use == TerritoryIntendedUse.OceanFishing) {
+                return true;
+            }
+
+            if (_config.SkipCrystallineConflict && (use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch)) {
+                return true;
+            }
+
+            if (_config.SkipMassivePC) {
+                return true;
+            }
+
+            if (_config.SkipGoldSaucer && System.Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
+                return true;
+            }
+
+            if (_config.SkipCustomTalk) {
+                return true;
+            }
+
+            if (_config.ExemptSubmarines && IsWorkshopTerritory()) {
+                return true;
+            }
+
+            if (_config.SkipNormalCutscenes) {
+                return true;
+            }
+
+            if (_config.SkipFeedBuddy) {
+                return true;
+            }
+
+            if (_config.SkipInn) {
+                return true;
+            }
+
+            if (_config.AllowCutsceneSeenGlobally) {
+                return true;
+            }
+
+            if (_config.ResearchMSQHook || _config.ResearchMassivePCHook || _config.ResearchGoldSaucerHook || _config.ResearchCustomTalkHook || _config.ResearchNormalCutscenesHook || _config.ResearchInnHook || _config.ResearchFeedBuddyHook) {
+                return true;
+            }
+
+            return false;
         }
 
         internal bool IsExemptedTerritory(ushort territory) {

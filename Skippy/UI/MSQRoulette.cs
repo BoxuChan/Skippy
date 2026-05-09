@@ -5,7 +5,7 @@ namespace Skippy.UI {
         private void UIMSQRoulette() {
             SectionHeader("MSQ Roulette");
             
-            ImGui.TextWrapped("This section covers cutscenes that are triggered within the Main Scenario Roulette Dungeons & Trials. Whether they are played through the Roulette or by queuing into the instance directly, they will remain skippable.\n" + "If a party member lacks this option or Skippy entirely, you will have to wait in the loading area until they finish viewing the cutscene(s).\n\n" + "Side Note: You can enable this option during the instance if you forgot to prior to, it will start skipping as soon as you turn it on (although after whichever cutscene you might be already in).");
+            ImGui.TextWrapped("This section covers cutscenes that are triggered within the Main Scenario Roulette dungeons & trials. Whether they are played via the roulette or by queuing directly into the instance, the cutscenes will still be skipped if this section is enabled.\n" + "If any party members do not have Skippy installed, or they don't have this section toggled, you will have to wait in the loading area until they finish viewing the cutscene(s).\n\n" + "Side Note: You can enable this option mid-run if you forgot beforehand and it will start skippy cutscenes after you enable it (though it will not skip a cutscene you're currently viewing).");
             
             ImGui.Spacing(); 
             ImGui.Spacing();
@@ -19,7 +19,7 @@ namespace Skippy.UI {
             bool changed = false;
             bool master = _config.SkipMSQRoulette;
             
-            FeatureCheckbox("##SkipMSQRoulette", "Skip all of the MSQ Roulette Cutscenes", "Skips all cutscenes in MSQ Roulette Dungeons & Trials, whether you queue into the official MSQ Roulette in the Duty Finder, or directly queue the Dungeon/Trial yourself.", ref master, out changed);
+            FeatureCheckbox("##SkipMSQRoulette", "Skip all of the MSQ Instance Cutscenes", "Skips all cutscenes in Castrum Meridianum, The Praetorium, and Porta Decumana.", ref master, out changed);
 
             if (changed && !autoParty) {
                 _config.SkipMSQRoulette = master;
@@ -46,7 +46,7 @@ namespace Skippy.UI {
             bool skipAll = _config.SkipMSQRoulette;
             SectionHeader(skipAll ? "Exemptions" : "Skip Specific");
 
-            ImGui.TextWrapped(skipAll ? "Any ticked entries in this category will be exempt from the global skip above — cutscenes will so on play normally in those instances." : "Any ticked entries in this category will be skipped individually, in case you want to only skip specific parts of this category and not all of them. Should you decide to skip everything, click the checkbox above.");
+            ImGui.TextWrapped(skipAll ? "Any enabled entries in this category will be skipped individually in case you want to only skip specific instances, rather than all of them by using the toggle in the above section." : "Any ticked entries in this category will be exempt from the global skip above and cutscenes will play as normal in those instances.");
             
             ImGui.Spacing(); 
             ImGui.Spacing();

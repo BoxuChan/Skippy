@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
@@ -18,8 +17,6 @@ namespace Skippy {
         internal static Skippy Instance { get; private set; } = null!;
 
         private readonly Config _config;
-        private readonly RandomNumberGenerator _csp;
-        private readonly decimal _base = uint.MaxValue;
         private readonly IDalamudPluginInterface _pluginInterface;
         private readonly ICommandManager _commandManager;
         private readonly IChatGui _chatGui;
@@ -57,16 +54,23 @@ namespace Skippy {
             _partyList = partyList;
             _clientState = clientState;
 
-            _csp = RandomNumberGenerator.Create();
-
             if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 4) {
-                configuration = new Config { Version = 4 };
+                configuration = new Config { Version = 5 };
                 _pluginInterface.SavePluginConfig(configuration);
                 
                 _chatGui.Print("[Skippy] Your configuration was from an older version and has been reset to defaults. Please re-apply your settings.");
             }
 
             _config = configuration;
+
+            if (_config.AutoEnable4Man) {
+                if (_config.SkipMSQRoulette) {
+                    _config.SkipMSQRoulette = false;
+                    _pluginInterface.SavePluginConfig(_config);
+                }
+                
+                _autoPartyActive = false;
+            }
             Address = new CutsceneAddressResolver(_pluginLog, sigScanner);
             Hooks = new SigHooks(_config, _pluginLog, gameInteropProvider, clientState, dataManager, Address);
 
@@ -102,9 +106,6 @@ namespace Skippy {
             _commandManager.AddHandler("/skippy", new CommandInfo(OnCommand) {
                 HelpMessage = "/skippy [on/off/log]: Toggle the plugin state, export debug logs, or open the settings window."
             });
-            _commandManager.AddHandler("/sc", new CommandInfo(OnCommand) {
-                HelpMessage = "/sc: Roll your sanity check dice."
-            });
         }
 
         public void Dispose() {
@@ -122,9 +123,7 @@ namespace Skippy {
             _clientState.CfPop -= OnCfPop;
 
             _commandManager.RemoveHandler("/skippy");
-            _commandManager.RemoveHandler("/sc");
             
-            _csp?.Dispose();
             GC.SuppressFinalize(this);
         }
         
@@ -147,6 +146,8 @@ namespace Skippy {
             bool copyNormalCutscenes = _config.ResearchNormalCutscenesHook;
             bool copyInn = _config.ResearchInnHook;
             bool copyFeedBuddy = _config.ResearchFeedBuddyHook;
+            bool copyGCRankUp = _config.ResearchGrandCompanyRankUpHook;
+            bool copyHairMake = _config.ResearchHairMakeHook;
 
             _config.ResearchMSQHook = false;
             _config.ResearchMassivePCHook = false;
@@ -155,6 +156,8 @@ namespace Skippy {
             _config.ResearchNormalCutscenesHook = false;
             _config.ResearchInnHook = false;
             _config.ResearchFeedBuddyHook = false;
+            _config.ResearchGrandCompanyRankUpHook = false;
+            _config.ResearchHairMakeHook = false;
             
             Hooks.RefreshHooks();
 
@@ -168,6 +171,8 @@ namespace Skippy {
                 _config.ResearchNormalCutscenesHook = copyNormalCutscenes;
                 _config.ResearchInnHook = copyInn;
                 _config.ResearchFeedBuddyHook = copyFeedBuddy;
+                _config.ResearchGrandCompanyRankUpHook = copyGCRankUp;
+                _config.ResearchHairMakeHook = copyHairMake;
                 
                 Hooks.RefreshHooks();
             } else {
@@ -236,11 +241,16 @@ namespace Skippy {
             bool isDirectMSQ = condition.RowId == 15 || condition.RowId == 16 || condition.RowId == 830;
             bool isMSQRoulette = condition.RowId == 0;
 
+            if (!isDirectMSQ && !isMSQRoulette) {
+                return;
+            }
+
             if (isDirectMSQ && condition.AllowUndersized) {
-                // Unrestricted Mode - Always skip no matter the size of the party
-            } else if ((isDirectMSQ || isMSQRoulette) && _partyList.Length == 4) {
-                // Forcefully require to be in a party with 3 other players (4-man stack)
+                // Unrestricted Mode - always enable regardless of party size
+            } else if (_partyList.Length == 4) {
+                // Premade party of 4
             } else {
+                _chatGui.Print("[Skippy] Auto-Party: Queue popped without a premade party of 4 — cutscenes will not be skipped on this run.");
                 return;
             }
 
@@ -266,7 +276,6 @@ namespace Skippy {
             } else {
                 _autoPartyActive = false;
                 _config.SkipMSQRoulette = false;
-                
                 Hooks.RefreshHooks();
                 _pluginInterface.SavePluginConfig(_config);
                 _chatGui.Print("[Skippy] Auto-Party: Left MSQ Instance - MSQ Roulette Skip is back to being disabled.");
@@ -276,24 +285,10 @@ namespace Skippy {
         private void OpenConfigUi() => _mainUI.IsOpen = true;
 
         private void OnCommand(string command, string arguments) {
-            if (command.ToLower() == "/sc") {
-                SanityCheck(); 
-                return;
-            }
-
             if (command.ToLower() == "/skippy") {
                 TogglePlugin(arguments.Trim().ToLower()); 
                 return;
             }
-        }
-
-        private void SanityCheck() {
-            byte[] rndSeries = new byte[4];
-            _csp.GetBytes(rndSeries);
-            int rnd = (int)Math.Abs(BitConverter.ToUInt32(rndSeries, 0) / _base * 50 + 1);
-            
-            _chatGui.Print(_config.IsEnabled ? $"sancheck: 1d100={rnd + 50}, Failed" : $"sancheck: 1d100={rnd}, Passed");
-            TogglePluginState();
         }
 
         private void TogglePlugin(string args) {

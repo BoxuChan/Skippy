@@ -23,11 +23,12 @@ namespace Skippy {
         SkipOceanFishing,
         SkipCrystallineConflict,
         SkipInn,
+        AllowCutsceneSeenGlobally,
     }
 
     [Serializable]
     public class Config : IPluginConfiguration {
-        public int Version { get; set; } = 4;
+        public int Version { get; set; } = 5;
 
         public bool IsEnabled { get; set; } = true;
 
@@ -61,6 +62,9 @@ namespace Skippy {
         public bool ResearchNormalCutscenesHook { get; set; } = false;
         public bool ResearchInnHook { get; set; } = false;
         public bool ResearchFeedBuddyHook { get; set; } = false;
+        public bool ResearchExtraLogs { get; set; } = false;
+        public bool ResearchGrandCompanyRankUpHook { get; set; } = false;
+        public bool ResearchHairMakeHook { get; set; } = false;
 
         public bool SkipFeedBuddy { get; set; } = false;
 
@@ -69,6 +73,8 @@ namespace Skippy {
         public bool SkipInn { get; set; } = false;
 
         public bool AutoEnable4Man { get; set; } = false;
+
+        public bool AllowCutsceneSeenGlobally { get; set; } = false;
 
         public bool HideWarning { get; set; } = false;
     }

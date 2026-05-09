@@ -5,7 +5,7 @@ namespace Skippy.UI {
         private void UIFeedBuddy() {
             SectionHeader("Feed Buddy Animation");
             
-            ImGui.TextWrapped("This section covers the Companion Feeding Animation cutscene that plays when you feed your Chocobo in Housing.");
+            ImGui.TextWrapped("This section covers the Companion Feeding animation cutscene that plays when you feed your Chocobo in a Chocobo Stable in housing districts.");
             
             ImGui.Spacing();
             ImGui.Spacing();

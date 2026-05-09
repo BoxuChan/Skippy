@@ -26,10 +26,10 @@ https://puni.sh/api/repository/boxu
 ## Commands
 
 - **/skippy**: Opens the settings window.
-- **/skippy [on/off]**: Enables or disables Skippy.
+- **/skippy [on/start/enable]**: Enables Skippy.
+- **/skippy [off/stop/disable]**: Disables Skippy.
 - **/skippy [log/export]**: Exports your Dalamud log file to your Desktop.
 - **/skippy [territory/zone]**: Prints your current territory ID and IntendedUse to chat.
-- **/sc**: Good old sanity check with a dice roll.
 
 ## How to Use
 
@@ -54,6 +54,7 @@ Skippy covers a fairly wide range of cutscenes now, which all belong to independ
 | **NPC Dialogue Cutscenes**  | Cutscenes that are triggered through NPC Custom Talk dialogue. Submarine Voyage cutscenes can be toggled independently.                                                                                                                               |
 | **World & Quest Cutscenes** | Cutscenes that are usually ran throughout the Overworld and Quests. We have yet to map out the contents list, feel free to report what you managed to skip with it!                                                                                   |
 | **Feed Buddy Scene**        | Cutscene that belongs to the Companion Feeding Animation.                                                                                                                                                                                             |
+| **Behaviour**               | Opt-in options that change how Skippy handles cutscenes globally. Includes a toggle to entirely skip first-time cutscene views. Disabled by default.                                                                                                  |
 
 ## Risky Skips
 
@@ -115,6 +116,7 @@ public enum SkippedCategory {
     SkipOceanFishing,
     SkipCrystallineConflict,
     SkipInn,
+    AllowCutsceneSeenGlobally,
 }
 ```
 

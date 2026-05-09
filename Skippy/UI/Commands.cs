@@ -26,7 +26,6 @@ namespace Skippy.UI {
                 Row("/skippy", "off / stop / disable", "Disables Skippy.");
                 Row("/skippy", "log / export", "Exports your Dalamud log to your Desktop.");
                 Row("/skippy", "territory / zone", "Prints the current territory ID and IntendedUse to chat.");
-                Row("/sc", "(none)", "Rolls your sanity check dice.");
 
                 ImGui.EndTable();
             }

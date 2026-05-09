@@ -351,4 +351,5 @@ MigrationBackup/
 
 # JetBrains / Rider / IntelliJ
 .idea/
+.vscode/
 *.sln.iml

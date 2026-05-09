@@ -24,6 +24,7 @@ namespace Skippy.UI {
         RiskySkips,
         HookResearch,
         AutoParty,
+        Behaviour,
         Logger,
         Commands,
         About
@@ -41,7 +42,7 @@ namespace Skippy.UI {
 
         internal static readonly HttpClient Http = new();
 
-        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.2.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
+        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.3.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
             _config = config;
             _setEnabled = setEnabled;
             _saveConfig = saveConfig;
@@ -87,6 +88,9 @@ namespace Skippy.UI {
                         _config.ResearchNormalCutscenesHook = false;
                         _config.ResearchInnHook = false;
                         _config.ResearchFeedBuddyHook = false;
+                        _config.ResearchGrandCompanyRankUpHook = false;
+                        _config.ResearchHairMakeHook = false;
+                        _config.ResearchExtraLogs = false;
                         
                         if (_category == Category.HookResearch) {
                             _category = Category.MSQRoulette;
@@ -164,10 +168,9 @@ namespace Skippy.UI {
                 ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, new Vector4(0.24f, 0.24f, 0.55f, 0.95f));
                 ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, new Vector4(0.24f, 0.24f, 0.55f, 0.95f));
 
-                if (ImGui.BeginChild("##Categories", new Vector2(0, topHeight - topUsed), false, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove)) {
-
+                if (ImGui.BeginChild("##Categories", new Vector2(0, topHeight - topUsed), false, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize)) {
                     bool error = !Skippy.Instance.Address.Valid;
-                    NavItem("MSQ Roulette", Category.MSQRoulette, _config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta, error, _config.AutoEnable4Man ? new Vector4(0.90f, 0.85f, 0.55f, 1f) : null);
+                    NavItem("MSQ Roulette", Category.MSQRoulette, _config.SkipMSQRoulette || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta, error, _config.AutoEnable4Man ? new Vector4(0.90f, 0.85f, 0.55f, 1f) : null);
                     NavItem("Large-Scale Content", Category.MassivePC, _config.SkipMassivePC, error);
                     NavItem("Gold Saucer", Category.GoldSaucer, _config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys, error);
                     NavItem("NPC Dialogue", Category.CustomTalk, _config.SkipCustomTalk || _config.ExemptSubmarines, error);
@@ -244,6 +247,7 @@ namespace Skippy.UI {
                     ImGui.Spacing();
 
                     IconNavItem("Auto-Party Mode", Category.AutoParty, FontAwesomeIcon.Users, new Vector4(0.70f, 0.70f, 0.70f, 1.0f));
+                    IconNavItem("Behaviour", Category.Behaviour, FontAwesomeIcon.SlidersH, new Vector4(0.70f, 0.70f, 0.70f, 1.0f));
                     IconNavItem("Logger", Category.Logger, FontAwesomeIcon.FileAlt, new Vector4(0.70f, 0.70f, 0.70f, 1.0f));
 
                     ImGui.Spacing(); 
@@ -266,12 +270,13 @@ namespace Skippy.UI {
                 ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, new Vector4(0.24f, 0.24f, 0.55f, 0.95f));
                 ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, new Vector4(0.24f, 0.24f, 0.55f, 0.95f));
 
-                var flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove;
+                var flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize;
                 
                 if (ImGui.BeginChild("##Skips", new Vector2(0, topHeight), false, flags)) {
                     ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(10f, 8f));
                     ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X - 20f);
                     ImGui.BeginGroup();
+                    ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X - 10f);
 
                     bool disabled = !_config.IsEnabled && !(_config.AutoEnable4Man && _config.IsEnabled && _category == Category.MSQRoulette);
                     
@@ -316,6 +321,10 @@ namespace Skippy.UI {
                             UIAutoParty();
                             break;
                         
+                        case Category.Behaviour:
+                            UIBehaviour();
+                            break;
+                        
                         case Category.Logger:
                             UILogger();
                             break;
@@ -336,6 +345,7 @@ namespace Skippy.UI {
                     ImGui.Spacing(); 
                     ImGui.Spacing();
                     ImGui.EndGroup();
+                    ImGui.PopTextWrapPos();
                     ImGui.PopItemWidth();
                 }
                 
@@ -555,7 +565,7 @@ namespace Skippy.UI {
 
         private void NavItem(string label, Category target, bool active, bool hasError = false, Vector4? circleColorOverride = null) {
             var height = ImGui.GetTextLineHeight() + ImGui.GetStyle().ItemSpacing.Y * 3f;
-            bool greyOut = !_config.IsEnabled && !(_config.AutoEnable4Man && _config.IsEnabled && target == Category.MSQRoulette);
+            var greyOut = !_config.IsEnabled && !(_config.AutoEnable4Man && _config.IsEnabled && target == Category.MSQRoulette);
 
             var iconColor = greyOut ? new Vector4(0.5f, 0.5f, 0.5f, 0.4f) : circleColorOverride ?? (!active ? new Vector4(0.70f, 0.20f, 0.20f, 1.0f) : hasError ? new Vector4(1.0f, 0.55f, 0.10f, 1.0f) : new Vector4(0.20f, 0.80f, 0.20f, 1.0f));
             var icon = hasError && active ? FontAwesomeIcon.ExclamationCircle.ToIconString() : FontAwesomeIcon.Circle.ToIconString();

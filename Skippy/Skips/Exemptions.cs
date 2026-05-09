@@ -5,7 +5,75 @@ using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryInte
 namespace Skippy.Skips {
     internal partial class SigHooks {
         private unsafe bool CutsceneSeenDetour(UIState* pointer, uint cutsceneId) {
-            return !IsExemptedTerritory((ushort)_clientState.TerritoryType) || _cutsceneSeenHook!.Original(pointer, cutsceneId);
+            var territory = (ushort)_clientState.TerritoryType;
+
+            if (_config.ResearchExtraLogs)
+                _pluginLog.Information("[Skippy] CutsceneSeenDetour: cutsceneId={0} territory={1}", cutsceneId, territory);
+
+            if (IsExemptedTerritory(territory)) {
+                if (_config.ResearchExtraLogs)
+                    _pluginLog.Information("[Skippy] CutsceneSeenDetour: territory is exempted, calling original.");
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
+            }
+
+            bool inMSQ = Array.IndexOf(TerritoryPrae, territory) >= 0 || Array.IndexOf(TerritoryCastrum, territory) >= 0 || Array.IndexOf(TerritoryPorta, territory) >= 0;
+            var use = GetIntendedUse(territory);
+
+            if (_config.SkipMSQRoulette && inMSQ) {
+                LogExemption("CutsceneSeen_MSQRoulette", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipOceanFishing && use == TerritoryIntendedUse.OceanFishing) {
+                LogExemption("CutsceneSeen_OceanFishing", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipCrystallineConflict && (use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch)) {
+                LogExemption("CutsceneSeen_CrystallineConflict", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipMassivePC) {
+                LogExemption("CutsceneSeen_MassivePC", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipGoldSaucer && Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
+                LogExemption("CutsceneSeen_GoldSaucer", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipCustomTalk) {
+                LogExemption("CutsceneSeen_CustomTalk", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipNormalCutscenes) {
+                LogExemption("CutsceneSeen_NormalCutscenes", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipFeedBuddy) {
+                LogExemption("CutsceneSeen_FeedBuddy", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.SkipInn) {
+                LogExemption("CutsceneSeen_Inn", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.AllowCutsceneSeenGlobally) {
+                LogExemption("CutsceneSeen_Global", true, cutsceneId);
+                return true;
+            }
+
+            if (_config.ResearchExtraLogs) {
+                _pluginLog.Information("[Skippy] CutsceneSeenDetour: no skip matched, calling original. (inMSQ={0} use={1})", inMSQ, use);
+            }
+            
+            return _cutsceneSeenHook!.Original(pointer, cutsceneId);
         }
 
         private long ExemptionMSQRoulette(nint luaState) {
@@ -28,7 +96,7 @@ namespace Skippy.Skips {
             bool inMSQTerritory = Array.IndexOf(TerritoryPrae, territory) >= 0 || Array.IndexOf(TerritoryCastrum, territory) >= 0 || Array.IndexOf(TerritoryPorta, territory) >= 0;
 
             if (_config.ResearchMSQHook) {
-                LogExemption("Research_MSQHook");
+                LogExemption("Dev_MSQHook");
                 return 1L;
             }
 
@@ -71,7 +139,7 @@ namespace Skippy.Skips {
             var use = GetIntendedUse(territory);
 
             if (_config.ResearchGoldSaucerHook) {
-                LogExemption("Research_GoldSaucerHook");
+                LogExemption("Dev_GoldSaucerHook");
                 return 1L;
             }
 
@@ -155,7 +223,7 @@ namespace Skippy.Skips {
 
         private long ExemptionMassivePC(nint luaState) {
             if (_config.ResearchMassivePCHook) {
-                LogExemption("Research_MassivePCHook");
+                LogExemption("Dev_MassivePCHook");
                 return 1L;
             }
             
@@ -165,7 +233,7 @@ namespace Skippy.Skips {
 
         private long ExemptionCustomTalk(nint luaState) {
             if (_config.ResearchCustomTalkHook) {
-                LogExemption("Research_CustomTalkHook");
+                LogExemption("Dev_CustomTalkHook");
                 return 1L;
             }
 
@@ -175,7 +243,7 @@ namespace Skippy.Skips {
 
         private long ExemptionNormalCutscenes(nint luaState1, nint luaState2) {
             if (_config.ResearchNormalCutscenesHook) {
-                LogExemption("Research_NormalCutscenesHook");
+                LogExemption("Dev_NormalCutscenesHook");
                 return 1L;
             }
 
@@ -201,7 +269,7 @@ namespace Skippy.Skips {
 
         private long ExemptionInn(nint luaState) {
             if (_config.ResearchInnHook) {
-                LogExemption("Research_InnHook");
+                LogExemption("Dev_InnHook");
             }
             
             return 1L;
@@ -209,7 +277,7 @@ namespace Skippy.Skips {
 
         private long ExemptionFeedBuddy(nint luaState) {
             if (_config.ResearchFeedBuddyHook) {
-                LogExemption("Research_FeedBuddyHook");
+                LogExemption("Dev_FeedBuddyHook");
             }
             
             return 1L;

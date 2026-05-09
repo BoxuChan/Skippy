@@ -31,6 +31,8 @@ namespace Skippy.Skips {
         private Hook<NormalCutscenesDelegate>? _normalCutscenesHook;
         private Hook<SinglePtrDelegate>? _innHook;
         private Hook<SinglePtrDelegate>? _feedBuddyHook;
+        private Hook<SinglePtrDelegate>? _grandCompanyRankUpHook;
+        private Hook<SinglePtrDelegate>? _hairMakeHook;
 
         private delegate long ContentDirectorDelegate(nint luaState);
         private delegate long NormalCutscenesDelegate(nint luaState1, nint luaState2);
@@ -53,7 +55,7 @@ namespace Skippy.Skips {
 
         internal void RefreshHooks() {
             bool exempt = IsExemptedTerritory((ushort)_clientState.TerritoryType);
-            SetEnabled(_config.IsEnabled && !exempt);
+            SetEnabled(_config.IsEnabled && !exempt && ShouldPatchMemory());
 
             bool msq = _config.IsEnabled && (_config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta || _config.ResearchMSQHook);
             const string msqSig = "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 84 99 ?? ?? ?? ??";
@@ -70,7 +72,8 @@ namespace Skippy.Skips {
                     _msqHook.Enable();
                 }
             } else {
-                _msqHook?.Disable();
+                _msqHook?.Dispose();
+                _msqHook = null;
             }
 
             RefreshContentDirectorHook(ref _massivePCHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 8B 11", _config.IsEnabled && (_config.SkipMassivePC || _config.ResearchMassivePCHook), ExemptionMassivePC);
@@ -87,6 +90,10 @@ namespace Skippy.Skips {
             RefreshInnHook(_config.IsEnabled && (_config.SkipInn || _config.ResearchInnHook));
 
             RefreshFeedBuddyHook(_config.IsEnabled && (_config.SkipFeedBuddy || _config.ResearchFeedBuddyHook));
+
+            RefreshSinglePtrHook(ref _grandCompanyRankUpHook, "40 53 48 83 EC 50 48 8B D9 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 83 38 00 0F 84 ?? ?? ?? ?? 48 8B 5B 08 E8 ?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 48 83 7B ?? ?? 75 04 33 DB EB 2D 48 8B 4B 60 48 8B 53 58 48 FF C9 48 03 D1 48 8B 4B 50 48 8B C2 48 FF C9 48 D1 E8 48 23 C8 48 8B 43 48 83 E2 01 48 8B 04 C8 48 8B 1C D0 48 8B 0D ?? ?? ?? ?? 48 89 1D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C8 48 8B 10 FF 92 ?? ?? ?? ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 48 8B C8 E8 ?? ?? ?? ?? 33 D2 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8D 4C 24 ?? 8B D8 E8 ?? ?? ?? ?? 8B C3 48 83 C4 50 5B C3 33 DB 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 8B C3 48 83 C4 50 5B C3 CC CC CC CC CC CC CC CC 40 55 53 48 8D 6C 24 ??", _config.IsEnabled && _config.ResearchGrandCompanyRankUpHook, _ => { LogExemption("Dev_GrandCompanyRankUp"); return 1L; });
+
+            RefreshSinglePtrHook(ref _hairMakeHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D9 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 5B 08 33 D2 45 33 C0 8D 4A 28 E8 ?? ?? ?? ?? 48 85 C0", _config.IsEnabled && _config.ResearchHairMakeHook, _ => { LogExemption("Dev_HairMake"); return 1L; });
         }
 
         private void RefreshContentDirectorHook(ref Hook<ContentDirectorDelegate>? hook, string sig, bool enable, ContentDirectorDelegate? exempt = null) {
@@ -97,6 +104,24 @@ namespace Skippy.Skips {
                         hook.Enable();
                     } catch (Exception e) {
                         _pluginLog.Warning(e, "Couldn't find this hook signature : {0}", sig[..Math.Min(40, sig.Length)]);
+                    }
+                } else if (!hook.IsEnabled) {
+                    hook.Enable();
+                }
+            } else {
+                hook?.Dispose();
+                hook = null;
+            }
+        }
+
+        private void RefreshSinglePtrHook(ref Hook<SinglePtrDelegate>? hook, string sig, bool enable, SinglePtrDelegate? detour = null) {
+            if (enable) {
+                if (hook == null) {
+                    try {
+                        hook = _gameInteropProvider.HookFromSignature<SinglePtrDelegate>(sig, detour ?? (_ => 1L));
+                        hook.Enable();
+                    } catch (Exception e) {
+                        _pluginLog.Warning(e, "Couldn't find hook signature: {0}", sig[..Math.Min(40, sig.Length)]);
                     }
                 } else if (!hook.IsEnabled) {
                     hook.Enable();
@@ -121,7 +146,8 @@ namespace Skippy.Skips {
                     _normalCutscenesHook.Enable();
                 }
             } else {
-                _normalCutscenesHook?.Disable();
+                _normalCutscenesHook?.Dispose();
+                _normalCutscenesHook = null;
             }
         }
 
@@ -140,7 +166,8 @@ namespace Skippy.Skips {
                     _innHook.Enable();
                 }
             } else {
-                _innHook?.Disable();
+                _innHook?.Dispose();
+                _innHook = null;
             }
         }
 
@@ -159,7 +186,8 @@ namespace Skippy.Skips {
                     _feedBuddyHook.Enable();
                 }
             } else {
-                _feedBuddyHook?.Disable();
+                _feedBuddyHook?.Dispose();
+                _feedBuddyHook = null;
             }
         }
 
@@ -173,6 +201,8 @@ namespace Skippy.Skips {
             _normalCutscenesHook?.Dispose();
             _innHook?.Dispose();
             _feedBuddyHook?.Dispose();
+            _grandCompanyRankUpHook?.Dispose();
+            _hairMakeHook?.Dispose();
         }
 
         internal unsafe void SetEnabled(bool isEnabled) {
@@ -197,7 +227,7 @@ namespace Skippy.Skips {
             }
         }
 
-        private const string Version = "2.2.2.0";
+        private const string Version = "2.2.3.0";
 
         internal static async Task<string> FetchPassword() {
             try {
@@ -208,24 +238,27 @@ namespace Skippy.Skips {
             }
         }
 
-        private void LogToSheet(string hook, ushort territory, string placeName, TerritoryIntendedUse intendedUse) {
-            bool isDev = hook.StartsWith("Research_");
+        private void LogToSheet(string hook, ushort territory, string placeName, TerritoryIntendedUse intendedUse, bool isCutsceneSeen = false, uint cutsceneId = 0) {
+            bool isDev = hook.StartsWith("Dev_");
             
             _ = Task.Run(async () => {
                 try {
-                    var json = $"{{\"hook\":\"{hook}\",\"territory\":{territory},\"place\":\"{placeName}\",\"intendedUse\":\"{intendedUse}\",\"time\":\"{DateTime.UtcNow:u}\",\"version\":\"{Version}\",\"devMode\":{(isDev ? "true" : "false")}}}";
+                    var json = $"{{\"hook\":\"{hook}\",\"territory\":{territory},\"place\":\"{placeName}\",\"intendedUse\":\"{intendedUse}\",\"time\":\"{DateTime.UtcNow:u}\",\"version\":\"{Version}\",\"devMode\":{(isDev ? "true" : "false")},\"isCutsceneSeen\":{(isCutsceneSeen ? "true" : "false")},\"cutsceneId\":{cutsceneId}}}";
                     await Http.PostAsync(DocURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
                 } catch { }
             });
         }
 
-        private void LogExemption(string hook) {
+        private void LogExemption(string hook, bool isCutsceneSeen = false, uint cutsceneId = 0) {
             var territory = (ushort)_clientState.TerritoryType;
             var use = GetIntendedUse(territory);
             var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
-            
-            _pluginLog.Information("[Skippy] {0} found — territory={1} ({2}) intendedUse={3}", hook, territory, name, use);
-            LogToSheet(hook, territory, name, use);
+
+            if (_config.ResearchExtraLogs) {
+                _pluginLog.Information("[Skippy] {0} — territory={1} ({2}) intendedUse={3} isCutsceneSeen={4} cutsceneId={5}", hook, territory, name, use, isCutsceneSeen, cutsceneId);
+            }
+
+            LogToSheet(hook, territory, name, use, isCutsceneSeen, cutsceneId);
         }
     }
 }

@@ -54,8 +54,7 @@ namespace Skippy.UI {
             while (i < _content.Length) {
                 var line = _content[i];
 
-                if (line.StartsWith("## IPC") || line.StartsWith("## `IPC`"))
-                {
+                if (line.StartsWith("## IPC") || line.StartsWith("## `IPC`")) {
                     inIpc = true;
                 } else if (line.StartsWith("## ") && inIpc) {
                     inIpc = false;
@@ -75,9 +74,7 @@ namespace Skippy.UI {
                         codeblock = false;
                         i++;
 
-                        if (inIpc) {
-                            // silently consume — already handled by the ### lookahead
-                        } else {
+                        if (!inIpc) {
                             ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.60f, 0.85f, 1.00f, 1f));
 
                             foreach (var cl in code) {
@@ -287,13 +284,18 @@ namespace Skippy.UI {
             }
 
             ImGui.Spacing();
+            var headers = ParseTableRow(rows[0]);
 
             if (!ImGui.BeginTable("##table", count, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp)) {
                 return;
             }
 
             for (int c = 0; c < count; c++) {
-                ImGui.TableSetupColumn(ParseTableRow(rows[0])[c]);
+                if (c == 0) {
+                    ImGui.TableSetupColumn(headers[c], ImGuiTableColumnFlags.WidthFixed, 110f);
+                } else {
+                    ImGui.TableSetupColumn(headers[c], ImGuiTableColumnFlags.WidthStretch);
+                }
             }
                 
             ImGui.TableHeadersRow();
@@ -304,7 +306,9 @@ namespace Skippy.UI {
                 
                 for (int c = 0; c < count && c < cells.Count; c++) {
                     ImGui.TableNextColumn();
-                    ImGui.TextWrapped(StripInlineMarkdown(cells[c]));
+                    ImGui.PushTextWrapPos(0f);
+                    ImGui.TextUnformatted(StripInlineMarkdown(cells[c]));
+                    ImGui.PopTextWrapPos();
                 }
             }
 
