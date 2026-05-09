@@ -114,6 +114,10 @@ namespace Skippy.IPC {
 				list.Add(SkippedCategory.SkipInn);
 			}
 
+			if (_config.AllowCutsceneSeenGlobally) {
+				list.Add(SkippedCategory.AllowCutsceneSeenGlobally);
+			}
+
 			return list.ToArray();
 		}
 
@@ -138,6 +142,7 @@ namespace Skippy.IPC {
 			["SkipOceanFishing"] = _config.SkipOceanFishing,
 			["SkipCrystallineConflict"] = _config.SkipCrystallineConflict,
 			["SkipInn"] = _config.SkipInn,
+			["AllowCutsceneSeenGlobally"] = _config.AllowCutsceneSeenGlobally,
 		};
 	}
 }

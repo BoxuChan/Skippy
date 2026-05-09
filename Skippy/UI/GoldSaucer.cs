@@ -6,7 +6,7 @@ namespace Skippy.UI {
         private void UIGoldSaucer() {
             SectionHeader("Gold Saucer");
             
-            ImGui.TextWrapped("This section covers the cutscenes that play inside Gold Saucer game modes. I still have to test out if anything more is contained in that group, but I do believe that should be all of them listed below.");
+            ImGui.TextWrapped("This section covers the cutscenes that play inside the Gold Saucer minigames. I've still yet to test out if anything more is contained in this group, but I do believe all of them should be listed below.");
             
             ImGui.Spacing(); 
             ImGui.Spacing();
@@ -14,7 +14,7 @@ namespace Skippy.UI {
             bool changed = false;
             bool master = _config.SkipGoldSaucer;
             
-            FeatureCheckbox("##SkipGoldSaucer", "Skip all of the Gold Saucer Cutscenes", "This will skip every cutscene in every game mode at once, to specify the game modes you want to keep the cutscenes of, check below in Exemptions, or you can directly pick to skip only specific game modes below in Skip Specific if you keep this global toggle off.", ref master, out changed);
+            FeatureCheckbox("##SkipGoldSaucer", "Skip all of the Gold Saucer Cutscenes", "This will skip all cutscenes in all minigames. To specify minigames you wish to keep, use the Exemptions feature below if this setting is enabled, or you can skip individual cutscenes below instead if you keep this toggle off.", ref master, out changed);
 
             if (changed) {
                 _config.SkipGoldSaucer = master;
@@ -32,7 +32,7 @@ namespace Skippy.UI {
             bool skipAll = _config.SkipGoldSaucer;
             SectionHeader(skipAll ? "[WIP] Exemptions" : "[WIP] Skip Specific");
 
-            ImGui.TextWrapped(skipAll ? "There shouldn't be any extra to this category, but feel free to let me know if you notice one that isn't listed. Any ticked entries in this category will be exempt from the global skip above — cutscenes will so on play normally in those modes." : "There shouldn't be any extra to this category, but feel free to let me know if you notice one that isn't listed. Any ticked entries in this category will be skipped individually, in case you want to only skip specific parts of this category and not all of them. Should you decide to skip everything, click the checkbox above.");
+            ImGui.TextWrapped(skipAll ? "There shouldn't be anything extra needed for this category, but feel free to let me know if you notice one that isn't listed or skipped. Any ticked entries in this section will be skipped individually, should you only want to skip certain minigames, otherwise use the global setting above." : "There shouldn't be anything extra needed for this category, but feel free to let me know if you notice one that isn't listed or skipped. Any ticked entries in this category will be skipped individually, in case you want to only skip specific parts of this category and not all of them. Should you decide to skip everything, click the checkbox above.");
             
             ImGui.Spacing(); 
             ImGui.Spacing();
@@ -76,7 +76,7 @@ namespace Skippy.UI {
                 
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
                     using var tooltip = ImRaii.Tooltip();
-                    ImGui.TextUnformatted("The Fall Guys event isn't currently active. This option will be available once more when it comes back!");
+                    ImGui.TextUnformatted("The Fall Guys event isn't currently active. This option will be available when it returns!");
                 }
             } else {
                 bool fallguys = _config.ExemptFallGuys;
