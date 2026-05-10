@@ -55,7 +55,7 @@ namespace Skippy.Skips {
             return string.Empty;
         }
 
-        private const string DocURL = "https://script.google.com/macros/s/AKfycbxS0vj47Xl-ET_xUHNtEe71fCwEHUeRATq6X-6hf8p4fT0iwbE8_vFWhqePIranvKnjCQ/exec";
+        private const string DocURL = "https://script.google.com/macros/s/AKfycbzAulYaKlLlW_IqhNMy51jBzGTuRfYIM2dfhksSkBFRO87iPpJ7N3V3zsrzOPjNVjxn4g/exec";
 
         private Hook<UIState.Delegates.IsCutsceneSeen>? _cutsceneSeenHook;
         private Hook<ContentDirectorDelegate>? _msqHook;
@@ -88,6 +88,8 @@ namespace Skippy.Skips {
             _playerState = playerState;
             _address = address;
         }
+
+        internal static readonly string ZeroUserID = Convert.ToHexString(SHA256.HashData(BitConverter.GetBytes(0UL)))[..32].ToLowerInvariant();
 
         internal string GetUserID() {
             var hash = SHA256.HashData(BitConverter.GetBytes(_playerState.ContentId));
@@ -161,6 +163,30 @@ namespace Skippy.Skips {
                 return false;
             }
         }
+        
+        internal static async Task<TesterInfo?> CheckTester(string userId) {
+            try {
+                var url = DocURL + $"?action=checkTester&userId={Uri.EscapeDataString(userId)}";
+                var result = (await GetStringWithRedirectAsync(url).ConfigureAwait(false)).Trim();
+
+                if (string.IsNullOrEmpty(result) || result.Equals("false", StringComparison.OrdinalIgnoreCase)) {
+                    return null;
+                }
+
+                var separator = result.IndexOf('|');
+                
+                if (separator < 0) {
+                    return null;
+                }
+
+                var nickname = result[..separator];
+                var message = result[(separator + 1)..];
+                
+                return new TesterInfo(nickname, message);
+            } catch {
+                return null;
+            }
+        }
 
         internal void RefreshHooks() {
             bool exempt = IsExemptedTerritory((ushort)_clientState.TerritoryType);
@@ -187,9 +213,7 @@ namespace Skippy.Skips {
 
             RefreshContentDirectorHook(ref _massivePCHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 8B 11", _config.IsEnabled && (_config.SkipMassivePC || _config.SkipCosmicExploration || _config.ResearchMassivePCHook), ExemptionMassivePC);
 
-            bool goldSaucer = _config.IsEnabled && (_config.SkipGoldSaucer
-                || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys
-                || _config.ExemptAirForceOne || _config.ExemptMahjong || _config.ResearchGoldSaucerHook);
+            bool goldSaucer = _config.IsEnabled && (_config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys || _config.ExemptAirForceOne || _config.ExemptMahjong || _config.ResearchGoldSaucerHook);
             RefreshContentDirectorHook(ref _goldSaucerHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 84 99 ?? ?? ?? ??", goldSaucer, ExemptionGoldSaucer);
 
             RefreshContentDirectorHook(ref _customTalkHook, "48 83 EC 58 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 85 C9 74 06", _config.IsEnabled && (_config.SkipCustomTalk || _config.ResearchCustomTalkHook), ExemptionCustomTalk);
@@ -336,7 +360,7 @@ namespace Skippy.Skips {
             }
         }
 
-        private const string Version = "2.2.4.0";
+        private const string Version = "2.2.4.1";
 
         internal static async Task<string> FetchPassword() {
             try {

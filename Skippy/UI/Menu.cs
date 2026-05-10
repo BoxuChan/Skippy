@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Numerics;
+using System.Text;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -12,6 +14,7 @@ using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Skippy.Skips;
 
 namespace Skippy.UI {
     internal enum Category {
@@ -42,7 +45,7 @@ namespace Skippy.UI {
 
         internal static readonly HttpClient Http = new();
 
-        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.4.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
+        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.4.1###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
             _config = config;
             _setEnabled = setEnabled;
             _saveConfig = saveConfig;
@@ -61,7 +64,7 @@ namespace Skippy.UI {
                 IconOffset = new Vector2(0, 1),
                 
                 ShowTooltip = () => {
-                    using var tooltip = Dalamud.Interface.Utility.Raii.ImRaii.Tooltip();
+                    using var tooltip = ImRaii.Tooltip();
                     ImGui.TextUnformatted("Support Skippy on Ko-fi");
                 },
                 
@@ -73,7 +76,7 @@ namespace Skippy.UI {
                 IconOffset = new Vector2(0, 1),
                 
                 ShowTooltip = () => {
-                    using var tooltip = Dalamud.Interface.Utility.Raii.ImRaii.Tooltip();
+                    using var tooltip = ImRaii.Tooltip();
                     ImGui.TextUnformatted(_config.DevMode ? "Developer Mode: ON" : "Developer Mode: OFF");
                 },
                 
@@ -99,7 +102,7 @@ namespace Skippy.UI {
                         Skippy.Instance.Hooks.RefreshHooks();
                         _saveConfig();
                         
-                        Skippy.Instance.PrintError("[Skippy] Developer Mode has been disabled.");
+                        Skippy.Instance.PrintError("[Skippy] Developer Mode has been disabled along with any tweaks you may have had enabled there.");
                     } else {
                         _devPasswordInput = string.Empty;
                         _devPasswordPending = false;
@@ -259,6 +262,7 @@ namespace Skippy.UI {
                 }
                 
                 ImGui.EndChild();
+
                 ImGui.PopStyleColor(4);
                 ImGui.PopStyleVar(2);
                 ImGui.TableNextColumn();
@@ -270,9 +274,14 @@ namespace Skippy.UI {
                 ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, new Vector4(0.24f, 0.24f, 0.55f, 0.95f));
                 ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, new Vector4(0.24f, 0.24f, 0.55f, 0.95f));
 
-                var flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize;
+                var flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar;
+                Vector2 _skipsChildScreenPos = default;
+                Vector2 _skipsChildScreenSize = default;
                 
                 if (ImGui.BeginChild("##Skips", new Vector2(0, topHeight), false, flags)) {
+                    _skipsChildScreenPos = ImGui.GetWindowPos();
+                    _skipsChildScreenSize = ImGui.GetWindowSize();
+                    
                     ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(10f, 8f));
                     ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X - 20f);
                     ImGui.BeginGroup();
@@ -347,9 +356,20 @@ namespace Skippy.UI {
                     ImGui.EndGroup();
                     ImGui.PopTextWrapPos();
                     ImGui.PopItemWidth();
+
+                    var _testerInfo = Skippy.Instance.TesterInfo;
+                    
+                    if (_testerInfo != null && _skipsChildScreenSize != default) {
+                        DrawTesterBadgeButton(_skipsChildScreenPos, _skipsChildScreenSize, _testerInfo);
+                    }
                 }
                 
                 ImGui.EndChild();
+
+                if (Skippy.Instance.TesterInfo != null && _skipsChildScreenSize != default) {
+                    DrawTesterBadgeImage(_skipsChildScreenPos, _skipsChildScreenSize);
+                }
+
                 ImGui.PopStyleColor(4);
                 ImGui.PopStyleVar(2);
             } catch (Exception e) {
@@ -358,16 +378,18 @@ namespace Skippy.UI {
 
             ImGui.EndTable();
 
-            var footerText  = "© Boxu - 2026 | Dalamud 15.0.0 (Patch 7.5)";
+            var footerText = "© Boxu - 2026 | Dalamud 15.0.0 (Patch 7.5)";
             var footerAvail = ImGui.GetContentRegionAvail().X;
-            
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + footerAvail - ImGui.CalcTextSize(footerText).X - 4f);
+            var footerY = ImGui.GetCursorPosY();
+
+            ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + footerAvail - ImGui.CalcTextSize(footerText).X - 4f, footerY));
             ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.4f, 0.4f, 0.6f, 0.7f));
             ImGui.TextUnformatted(footerText);
             ImGui.PopStyleColor();
 
             DrawPopup();
             DrawDevPopup();
+            DrawTesterPopup();
         }
 
         private bool _showDevPopup;
@@ -376,6 +398,167 @@ namespace Skippy.UI {
         private bool _devPasswordPending;
         private bool _showPopup;
         private bool _popupOpen;
+        private bool _showTesterPopup;
+        private bool _testerPopupOpen;
+        private ISharedImmediateTexture? _badgeIcon;
+
+        private const float BadgeSize = 36f;
+        private const float BadgePadRight = 20f;
+        private const float BadgePadBot = 8f;
+
+        private static Vector2 CalcBadgeScreenPos(Vector2 childScreenPos, Vector2 childScreenSize) => new Vector2(childScreenPos.X + childScreenSize.X - BadgeSize - BadgePadRight, childScreenPos.Y + childScreenSize.Y - BadgeSize - BadgePadBot);
+        
+        private void DrawTesterBadgeButton(Vector2 childScreenPos, Vector2 childScreenSize, TesterInfo testerInfo) {
+            var screenPos = CalcBadgeScreenPos(childScreenPos, childScreenSize);
+
+            ImGui.SetCursorScreenPos(screenPos);
+            bool clicked = ImGui.InvisibleButton("##TesterBadgeOverlay", new Vector2(BadgeSize, BadgeSize));
+            bool hovered = ImGui.IsItemHovered();
+
+            if (clicked) {
+                _showTesterPopup = true;
+            }
+
+            if (hovered) {
+                using var tooltip = ImRaii.Tooltip();
+                ImGui.TextUnformatted($"Skippy Supporter  |  {testerInfo.Nickname}");
+            }
+        }
+
+        private void DrawTesterBadgeImage(Vector2 childScreenPos, Vector2 childScreenSize) {
+            if (_badgeIcon == null) {
+                var dir = _pluginInterface.AssemblyLocation.DirectoryName!;
+                var path = Path.Combine(dir, "badge.png");
+                
+                if (File.Exists(path)) {
+                    try {
+                        _badgeIcon = _tex.GetFromFile(path);
+                    } catch { }
+                }
+            }
+
+            var screenPos = CalcBadgeScreenPos(childScreenPos, childScreenSize);
+
+            IDalamudTextureWrap? badgeWrap = null;
+            _badgeIcon?.TryGetWrap(out badgeWrap, out _);
+            
+            var drawList = ImGui.GetWindowDrawList();
+            drawList.PushClipRect(childScreenPos, childScreenPos + childScreenSize, false);
+
+            bool popupOpen = ImGui.IsPopupOpen("", ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
+            var mouse = ImGui.GetIO().MousePos;
+            bool hovered = !popupOpen && mouse.X >= screenPos.X && mouse.X <= screenPos.X + BadgeSize && mouse.Y >= screenPos.Y && mouse.Y <= screenPos.Y + BadgeSize;
+
+            if (badgeWrap != null) {
+                var badgeEnd = screenPos + new Vector2(BadgeSize, BadgeSize);
+                drawList.AddImage(badgeWrap.Handle, screenPos, badgeEnd, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
+
+                if (hovered) {
+                    drawList.AddImage(badgeWrap.Handle, screenPos, badgeEnd, Vector2.Zero, Vector2.One, 0x66FFFFFF);
+                }
+            } else {
+                uint starCol = hovered ? 0xFF44DDFF : 0xFF22BBEE;
+                drawList.AddText(ImGui.GetFont(), BadgeSize, screenPos, starCol, "★");
+            }
+
+            drawList.PopClipRect();
+        }
+
+        private void DrawTesterPopup() {
+            var testerInfo = Skippy.Instance.TesterInfo;
+            
+            if (testerInfo == null) {
+                return;
+            }
+
+            if (_showTesterPopup) {
+                ImGui.OpenPopup("##TesterPopup");
+                _showTesterPopup = false;
+                _testerPopupOpen = true;
+            }
+
+            ImGui.SetNextWindowSize(new Vector2(400, 0), ImGuiCond.Always);
+
+            if (ImGui.BeginPopupModal("##TesterPopup", ref _testerPopupOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize)) {
+                ImGui.Spacing();
+
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.90f, 0.80f, 0.30f, 1f));
+
+                var starIcon = FontAwesomeIcon.Star.ToIconString();
+                float starWidth;
+                
+                using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
+                    starWidth = ImGui.CalcTextSize(starIcon).X;
+                }
+
+                var titleLabel = " Special Thanks!";
+                var titleWidth = starWidth + ImGui.CalcTextSize(titleLabel).X + 4f;
+                var avail = ImGui.GetContentRegionAvail().X;
+                
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (avail - titleWidth) * 0.5f);
+
+                using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
+                    ImGui.TextUnformatted(starIcon);
+                }
+                
+                ImGui.SameLine(0, 4f);
+                ImGui.TextUnformatted(titleLabel);
+                ImGui.PopStyleColor();
+
+                ImGui.Spacing();
+
+                var body = $"Hi there {testerInfo.Nickname}!～\n\n\n" + "Thank you so much for all of the feedback and the time you've contributed to helping me in making this plugin better for everyone.\n\n\n\n" + "So.. This is a lil' badge as a small token of my gratitude and appreciation, thanks lots!～";
+
+                foreach (var paragraph in body.Split('\n')) {
+                    if (paragraph.Length == 0) {
+                        ImGui.Spacing();
+                        continue;
+                    }
+                    foreach (var line in WrapText(paragraph, avail)) {
+                        var width = ImGui.CalcTextSize(line).X;
+                        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + Math.Max(0f, (avail - width) * 0.5f));
+                        ImGui.TextUnformatted(line);
+                    }
+                }
+
+                var hasMessage = !string.IsNullOrWhiteSpace(testerInfo.Message) && !testerInfo.Message.Trim().Equals("N/A", StringComparison.OrdinalIgnoreCase);
+
+                if (hasMessage) {
+                    ImGui.Spacing();
+                    ImGui.Spacing();
+                    ImGui.Spacing();
+                    ImGui.Separator();
+                    ImGui.Spacing();
+                    ImGui.Spacing();
+
+                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.65f, 0.65f, 0.90f, 0.90f));
+                    var msg = $"\u201C{testerInfo.Message.Trim()}\u201D";
+                    
+                    foreach (var line in WrapText(msg, avail)) {
+                        var width = ImGui.CalcTextSize(line).X;
+                        
+                        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + Math.Max(0f, (avail - width) * 0.5f));
+                        ImGui.TextUnformatted(line);
+                    }
+                    
+                    ImGui.PopStyleColor();
+                }
+
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                const float closeWidth = 150f;
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + Math.Max(0f, (avail - closeWidth) * 0.5f));
+                if (ImGui.Button("Close", new Vector2(closeWidth, 0))) {
+                    ImGui.CloseCurrentPopup();
+                }
+
+                ImGui.EndPopup();
+            }
+        }
 
         private void DrawPopup() {
             if (_showPopup) {
@@ -558,7 +741,7 @@ namespace Skippy.UI {
 
             if (ImGui.IsItemHovered()) {
                 using var tooltip = ImRaii.Tooltip();
-                ImGui.TextUnformatted(hasError ? "[ERROR] — Cutscene offsets not found, the plugin will not work" : _config.IsEnabled ? "[ENABLED] — Click to Disable Skippy" : "[DISABLED] — Click to Enable Skippy");
+                ImGui.TextUnformatted(hasError ? "[ERROR] — Cutscene Offsets Not Found" : _config.IsEnabled ? "[ENABLED] — Click to Disable Skippy" : "[DISABLED] — Click to Enable Skippy");
             }
 
         }
@@ -724,11 +907,37 @@ namespace Skippy.UI {
             ImGui.Spacing(); 
             ImGui.Spacing();
         }
+        
+        private static IEnumerable<string> WrapText(string text, float maxWidth) {
+            var words = text.Split(' ');
+            var line  = new StringBuilder();
+
+            foreach (var word in words) {
+                var test = line.Length == 0 ? word : line + " " + word;
+                
+                if (ImGui.CalcTextSize(test).X > maxWidth && line.Length > 0) {
+                    yield return line.ToString();
+                    line.Clear();
+                    line.Append(word);
+                } else {
+                    if (line.Length > 0) {
+                        line.Append(' ');
+                    }
+                    
+                    line.Append(word);
+                }
+            }
+
+            if (line.Length > 0) {
+                yield return line.ToString();
+            }
+        }
 
         internal async Task LoadRemoteImage(string url, Action<IDalamudTextureWrap> onLoaded) {
             try {
                 var bytes = await Http.GetByteArrayAsync(url).ConfigureAwait(false);
                 var wrap = await _tex.CreateFromImageAsync(bytes).ConfigureAwait(false);
+                
                 onLoaded(wrap);
             } catch { }
         }
