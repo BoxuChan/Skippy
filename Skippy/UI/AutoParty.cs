@@ -5,7 +5,7 @@ namespace Skippy.UI {
         private void UIAutoParty() {
             SectionHeader("Auto-Party Mode");
             
-            ImGui.TextWrapped("When you queue for an MSQ Roulette duty in a premade party of 4 and the queue pops, the MSQ Roulette Skip will be enabled automatically. Once you leave the instance, it will be disabled again ; that way, you don't have to take any risk of skipping cutscenes without people you trust, or in a group that may not have Skippy and get you reported!");
+            ImGui.TextWrapped("When you queue for an MSQ Roulette duty in a premade party of 4 and the queue pops, the MSQ Roulette Skip will be enabled automatically. Once you leave the instance, it will be disabled again — that way, you don't have to take any risk of skipping cutscenes without people you trust!");
             
             ImGui.Spacing(); 
             ImGui.Spacing();
@@ -26,19 +26,50 @@ namespace Skippy.UI {
                     
                     Skippy.Instance.Hooks.RefreshHooks();
                     Skippy.Instance.PrintChat("[Skippy] Auto-Party Mode Enabled - The skip will now only activate when queuing into MSQ Roulette duties.");
+                } else {
+                    _config.CheckPartySkippy = false;
+                    Skippy.Instance.PrintChat("[Skippy] Auto-Party Mode Disabled - The skip will no longer activate when queueing, check MSQ Roulette instead.");
                 }
 
                 Skippy.Instance.SaveConfig();
             }
 
-            SectionHeader("[WIP] Exemptions");
+            SectionHeader("Check Party Members for Skippy");
 
-            ImGui.TextWrapped("In theory, I would like to make it so that you're able to \"sync\" with other players in your party.\n\n" + "If all of them have Skippy and their MSQ Roulette Skip enabled, then it would turn your Skippy on, automatically, or, would turn everyone's Skippy & MSQ Roulette Skip on through an additional mode perhaps.\n" + "However, this would require communicating across game clients, which is not possible just with an IPC check and would require a server-side relay.");
-            
-            ImGui.Spacing(); 
+            ImGui.TextWrapped("When enabled, Skippy will verify that ALL members of your party also have Skippy installed before enabling the skip.\n\n" + "How it works: when the queue pops, each player with Skippy posts an anonymous request. " + "After a short wait, Skippy checks whether every member of the party posted one or not. " + "If they all did, it means everyone has Skippy and it is safe to skip the cutscenes in the instance they are queueing for. " + "If even one player is missing, the skip will NOT be enabled for this run.");
+
             ImGui.Spacing();
+            ImGui.Spacing();
+
+            bool checkChanged = false;
+            bool checkParty = _config.CheckPartySkippy;
+
+            if (!_config.AutoEnable4Man) ImGui.BeginDisabled();
             
-            WipToggle("Check Party Members for Skippy");
+            FeatureCheckbox("##CheckPartySkippy", "Check Party Members for Skippy", "Only enable the skip when every party member has Skippy installed. Requires Auto-Party Mode to function.", ref checkParty, out checkChanged);
+            
+            if (!_config.AutoEnable4Man) ImGui.EndDisabled();
+
+            if (!_config.AutoEnable4Man) {
+                ImGui.Spacing();
+
+                ImGui.PushStyleColor(ImGuiCol.Text, new System.Numerics.Vector4(0.65f, 0.65f, 0.40f, 1f));
+                ImGui.TextWrapped("This feature requires Auto-Party Mode to be enabled in order to function. Enable it in the section above first.");
+                ImGui.PopStyleColor();
+
+                ImGui.Spacing();
+            }
+
+            if (checkChanged && _config.AutoEnable4Man) {
+                _config.CheckPartySkippy = checkParty;
+                Skippy.Instance.SaveConfig();
+
+                if (checkParty) {
+                    Skippy.Instance.PrintChat("[Skippy] Party Plugin Check Enabled — The skip will only activate when all party members have Skippy.");
+                } else {
+                    Skippy.Instance.PrintChat("[Skippy] Party Plugin Check Disabled — The skip will activate for any premade party of 4.");
+                }
+            }
         }
     }
 }

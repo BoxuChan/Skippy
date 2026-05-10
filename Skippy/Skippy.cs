@@ -23,9 +23,13 @@ namespace Skippy {
         private readonly IPluginLog _pluginLog;
         private readonly IPartyList _partyList;
         private readonly IClientState _clientState;
+        private readonly IPlayerState _playerState;
         
         internal bool _devModeValid { get; private set; } = false;
         private bool _autoPartyActive;
+
+        private string? _pendingPartyId;
+        private bool _allPartyHasSkippy;
 
         internal readonly SigHooks Hooks;
         private readonly IPC.IPC _IPC;
@@ -44,7 +48,8 @@ namespace Skippy {
             ITextureProvider textureProvider,
             IClientState clientState,
             IDataManager dataManager,
-            IPartyList partyList) {
+            IPartyList partyList,
+            IPlayerState playerState) {
             Instance = this;
 
             _pluginInterface = pluginInterface;
@@ -53,9 +58,10 @@ namespace Skippy {
             _pluginLog = pluginLog;
             _partyList = partyList;
             _clientState = clientState;
+            _playerState = playerState;
 
             if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 4) {
-                configuration = new Config { Version = 5 };
+                configuration = new Config { Version = 6 };
                 _pluginInterface.SavePluginConfig(configuration);
                 
                 _chatGui.Print("[Skippy] Your configuration was from an older version and has been reset to defaults. Please re-apply your settings.");
@@ -72,7 +78,7 @@ namespace Skippy {
                 _autoPartyActive = false;
             }
             Address = new CutsceneAddressResolver(_pluginLog, sigScanner);
-            Hooks = new SigHooks(_config, _pluginLog, gameInteropProvider, clientState, dataManager, Address);
+            Hooks = new SigHooks(_config, _pluginLog, gameInteropProvider, clientState, dataManager, playerState, Address);
 
             if (_config.DevMode) {
                 _ = DevValidation();
@@ -104,7 +110,7 @@ namespace Skippy {
             }
 
             _commandManager.AddHandler("/skippy", new CommandInfo(OnCommand) {
-                HelpMessage = "/skippy [on/off/log]: Toggle the plugin state, export debug logs, or open the settings window."
+                HelpMessage = "/skippy [on/off/log/userid]: Toggle the plugin state, export debug logs, print your UserID, or open the settings window."
             });
         }
 
@@ -136,6 +142,13 @@ namespace Skippy {
         internal void PrintSuccess(string message) {
             var msg = new Dalamud.Game.Text.SeStringHandling.SeStringBuilder().AddUiForeground(message, 72).Build();
             _chatGui.Print(msg);
+        }
+
+        internal void PrintUserID() {
+            var userId = Hooks.GetUserID();
+            
+            _chatGui.Print($"[Skippy] Your User ID is: {userId}");
+            _chatGui.Print("[Skippy] Copy this and send it to @Boxu when reporting a bug!");
         }
         
         internal async Task DevValidation() {
@@ -245,15 +258,54 @@ namespace Skippy {
                 return;
             }
 
-            if (isDirectMSQ && condition.AllowUndersized) {
-                // Unrestricted Mode - always enable regardless of party size
-            } else if (_partyList.Length == 4) {
-                // Premade party of 4
-            } else {
+            bool isUnrestricted = isDirectMSQ && condition.AllowUndersized;
+            bool isPremade4 = _partyList.Length == 4;
+
+            if (!isUnrestricted && !isPremade4) {
                 _chatGui.Print("[Skippy] Auto-Party: Queue popped without a premade party of 4 — cutscenes will not be skipped on this run.");
                 return;
             }
 
+            if (!isPremade4) {
+                var soloPartyId = Hooks.BuildPartyID(_partyList);
+                if (soloPartyId != null) {
+                    _pendingPartyId = soloPartyId;
+                    Hooks.PostMatchmaking(soloPartyId, 1, condition.Name.ToString());
+                }
+                EnableAutoParty();
+                return;
+            }
+
+            if (_config.CheckPartySkippy) {
+                var partyId = Hooks.BuildPartyID(_partyList);
+                
+                if (partyId != null) {
+                    _pendingPartyId = partyId;
+                    int partySize = _partyList.Length;
+                    Hooks.PostMatchmaking(partyId, partySize, condition.Name.ToString());
+
+                    _ = Task.Run(async () => {
+                        await Task.Delay(5000).ConfigureAwait(false);
+
+                        bool allHaveSkippy = await SigHooks.CheckAllPartyHasSkippy(partyId, partySize).ConfigureAwait(false);
+                        _allPartyHasSkippy = allHaveSkippy;
+
+                        if (!allHaveSkippy) {
+                            _chatGui.Print("[Skippy] Auto-Party: One or more party members don't have Skippy — cutscenes will not be skipped to keep your account safe.");
+                            Hooks.DeleteMatchmaking(partyId);
+                            return;
+                        }
+
+                        EnableAutoParty();
+                    });
+                    return;
+                }
+            }
+
+            EnableAutoParty();
+        }
+
+        private void EnableAutoParty() {
             if (!_config.SkipMSQRoulette) {
                 _config.SkipMSQRoulette = true;
                 _autoPartyActive = true;
@@ -275,10 +327,16 @@ namespace Skippy {
                 _chatGui.Print("[Skippy] Auto-Party: Entered MSQ Instance with a Premade Light Party - MSQ Roulette Skip will be active.");
             } else {
                 _autoPartyActive = false;
+                _allPartyHasSkippy = false;
+                var leftPartyId = _pendingPartyId;
+                _pendingPartyId = null;
                 _config.SkipMSQRoulette = false;
                 Hooks.RefreshHooks();
                 _pluginInterface.SavePluginConfig(_config);
                 _chatGui.Print("[Skippy] Auto-Party: Left MSQ Instance - MSQ Roulette Skip is back to being disabled.");
+                if (leftPartyId != null) {
+                    Hooks.DeleteMatchmaking(leftPartyId);
+                }
             }
         }
 
@@ -293,22 +351,35 @@ namespace Skippy {
 
         private void TogglePlugin(string args) {
             switch (args) {
-                case "on": case "start": case "enable":
+                case "on":
+                case "start":
+                case "enable":
                     SetPluginState(true);
                     _chatGui.Print("[Skippy] Plugin has been enabled.");
                     break;
                 
-                case "off": case "stop": case "disable":
+                case "off":
+                case "stop":
+                case "disable":
                     SetPluginState(false);
                     _chatGui.Print("[Skippy] Plugin has been disabled.");
                     break;
                 
-                case "log": case "export": case "exportlog":
+                case "log":
+                case "export":
+                case "exportlog":
                     ExportLog();
                     break;
                 
-                case "territory": case "zone":
+                case "territory":
+                case "zone":
                     Hooks.PrintTerritory(_chatGui);
+                    break;
+
+                case "user":
+                case "id":
+                case "userid":
+                    PrintUserID();
                     break;
                 
                 default:

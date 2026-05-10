@@ -1,9 +1,12 @@
 [
   {
-    "version": "2.2.3.1",
+    "version": "2.2.4.0",
     "date": "2026-05-10",
     "changes": [
-      "Logger: (Bugfix) Various Categories weren't logging properly, making it hard for hook research to take place, this has now been fixed."
+      "Global: Added an anonymous User ID system. Each player is assigned a stable 16-character ID for internal purposes. Use '/skippy user' to print yours to chat.",
+      "Auto-Party Mode: Added 'Check Party Members for Skippy'. When enabled, Skippy posts an anonymous request on queue pop and checks whether every party member did the same. If all members have Skippy, the skip enables as normal, if even one is missing, the skip won't happen.",
+      "MSQ Roulette: (Bugfix) Fixed 'Bowl of Embers' getting skipped accidentally when MSQ Roulette skip is enabled.",
+      "Large-Scale Content: Added Cosmic Exploration to the possible skips (may not fully work)."
     ]
   }
 ]

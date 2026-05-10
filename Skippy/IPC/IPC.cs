@@ -62,6 +62,10 @@ namespace Skippy.IPC {
 				list.Add(SkippedCategory.SkipMassivePC);
 			}
 
+			if (_config.SkipCosmicExploration) {
+				list.Add(SkippedCategory.SkipCosmicExploration);
+			}
+
 			if (_config.SkipGoldSaucer) {
 				list.Add(SkippedCategory.SkipGoldSaucer);
 			}
@@ -129,6 +133,7 @@ namespace Skippy.IPC {
 			["ExemptCastrum"] = _config.ExemptCastrum,
 			["ExemptPorta"] = _config.ExemptPorta,
 			["SkipMassivePC"] = _config.SkipMassivePC,
+			["SkipCosmicExploration"] = _config.SkipCosmicExploration,
 			["SkipGoldSaucer"] = _config.SkipGoldSaucer,
 			["ExemptChocoboRacing"] = _config.ExemptChocoboRace,
 			["ExemptVerminion"] = _config.ExemptVerminion,

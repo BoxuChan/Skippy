@@ -8,11 +8,11 @@ namespace Skippy.Skips {
             var territory = (ushort)_clientState.TerritoryType;
 
             if (_config.ResearchExtraLogs)
-                _pluginLog.Information("[Skippy] CutsceneSeenDetour: cutsceneId={0} territory={1}", cutsceneId, territory);
+                _pluginLog.Information("CutsceneSeenDetour: cutsceneId={0} territory={1}", cutsceneId, territory);
 
             if (IsExemptedTerritory(territory)) {
                 if (_config.ResearchExtraLogs)
-                    _pluginLog.Information("[Skippy] CutsceneSeenDetour: territory is exempted, calling original.");
+                    _pluginLog.Information("CutsceneSeenDetour: territory is exempted, calling original.");
                 return _cutsceneSeenHook!.Original(pointer, cutsceneId);
             }
 
@@ -32,6 +32,10 @@ namespace Skippy.Skips {
             }
 
             if (_config.SkipMassivePC) {
+                return true;
+            }
+
+            if (_config.SkipCosmicExploration && use == TerritoryIntendedUse.CosmicExploration) {
                 return true;
             }
 
@@ -73,7 +77,7 @@ namespace Skippy.Skips {
             }
 
             if (_config.ResearchExtraLogs) {
-                _pluginLog.Information("[Skippy] CutsceneSeenDetour: no skip matched, calling original. (inMSQ={0} use={1})", inMSQ, use);
+                _pluginLog.Information("CutsceneSeenDetour: no skip matched, calling original. (inMSQ={0} use={1})", inMSQ, use);
             }
             
             return _cutsceneSeenHook!.Original(pointer, cutsceneId);
@@ -155,7 +159,7 @@ namespace Skippy.Skips {
             }
 
             if (_config.SkipGoldSaucer) {
-                if (System.Array.IndexOf(GoldSaucerIntendedUses, use) < 0) {
+                if (Array.IndexOf(GoldSaucerIntendedUses, use) < 0) {
                     return _goldSaucerHook!.Original(luaState);
                 }
 
@@ -185,7 +189,7 @@ namespace Skippy.Skips {
                         break;
                 }
 
-                if (!exempt && System.Array.IndexOf(TerritoryMahjong, territory) >= 0) {
+                if (!exempt && Array.IndexOf(TerritoryMahjong, territory) >= 0) {
                     exempt = _config.ExemptMahjong;
                 }
 
@@ -219,7 +223,7 @@ namespace Skippy.Skips {
                         break;
                 }
 
-                if (!skip && System.Array.IndexOf(TerritoryMahjong, territory) >= 0) {
+                if (!skip && Array.IndexOf(TerritoryMahjong, territory) >= 0) {
                     skip = _config.ExemptMahjong;
                 }
 
@@ -237,8 +241,21 @@ namespace Skippy.Skips {
                 LogExemption("Dev_MassivePCHook");
                 return 1L;
             }
-            
-            LogExemption("MassivePC"); 
+
+            var use = GetIntendedUse((ushort)_clientState.TerritoryType);
+
+            if (use == TerritoryIntendedUse.CosmicExploration) {
+                if (!_config.SkipCosmicExploration)
+                    return _massivePCHook!.Original(luaState);
+
+                LogExemption("MassivePC");
+                return 1L;
+            }
+
+            if (!_config.SkipMassivePC)
+                return _massivePCHook!.Original(luaState);
+
+            LogExemption("MassivePC");
             return 1L;
         }
 
@@ -264,6 +281,15 @@ namespace Skippy.Skips {
             if (use == TerritoryIntendedUse.OceanFishing && !_config.SkipOceanFishing)
                 return _normalCutscenesHook!.Original(luaState1, luaState2);
 
+            // Cosmic Exploration triggers via MassivePC & NormalCutscenes but are part of MassivePC
+            if (use == TerritoryIntendedUse.CosmicExploration) {
+                if (!_config.SkipCosmicExploration)
+                    return _normalCutscenesHook!.Original(luaState1, luaState2);
+
+                LogExemption("MassivePC");
+                return 1L;
+            }
+
             if (_config.SkipNormalCutscenes) {
                 if (_config.ExemptSubmarines && isWorkshop) {
                     return _normalCutscenesHook!.Original(luaState1, luaState2);
@@ -274,7 +300,7 @@ namespace Skippy.Skips {
                 }
             }
 
-            // Submarine trigger via NormalCutscenes but are part of CustomTalk
+            // Submarines trigger via NormalCutscenes but are part of CustomTalk
             LogExemption(isWorkshop ? "CustomTalk" : "NormalCutscenes");
             return 1L;
         }

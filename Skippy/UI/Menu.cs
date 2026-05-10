@@ -42,7 +42,7 @@ namespace Skippy.UI {
 
         internal static readonly HttpClient Http = new();
 
-        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.3.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
+        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.4.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
             _config = config;
             _setEnabled = setEnabled;
             _saveConfig = saveConfig;
