@@ -7,20 +7,35 @@ namespace Skippy.Skips {
         private unsafe bool CutsceneSeenDetour(UIState* pointer, uint cutsceneId) {
             var territory = (ushort)_clientState.TerritoryType;
 
-            if (_config.ResearchExtraLogs)
+            if (_config.ResearchExtraLogs) {
                 _pluginLog.Information("CutsceneSeenDetour: cutsceneId={0} territory={1}", cutsceneId, territory);
+            }
 
             if (IsExemptedTerritory(territory)) {
-                if (_config.ResearchExtraLogs)
+                if (_config.ResearchExtraLogs) {
                     _pluginLog.Information("CutsceneSeenDetour: territory is exempted, calling original.");
+                }
+                
                 return _cutsceneSeenHook!.Original(pointer, cutsceneId);
             }
 
             bool inMSQ = Array.IndexOf(TerritoryPrae, territory) >= 0 || Array.IndexOf(TerritoryCastrum, territory) >= 0 || Array.IndexOf(TerritoryPorta, territory) >= 0;
             var use = GetIntendedUse(territory);
+            
+            if (inMSQ) {
+                if (_config.SkipMSQRoulette) {
+                    if (_config.ResearchExtraLogs) {
+                        _pluginLog.Information("CutsceneSeenDetour: inMSQ + SkipMSQRoulette, returning true.");
+                    }
+                    
+                    return true;
+                }
 
-            if (_config.SkipMSQRoulette && inMSQ) {
-                return true;
+                if (_config.ResearchExtraLogs) {
+                    _pluginLog.Information("CutsceneSeenDetour: inMSQ but SkipMSQRoulette is off, calling original.");
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
             }
 
             if (_config.SkipOceanFishing && use == TerritoryIntendedUse.OceanFishing) {
@@ -58,11 +73,9 @@ namespace Skippy.Skips {
             if (_config.SkipInn) {
                 return true;
             }
-            
+
             if (_config.AllowCutsceneSeenGlobally) {
-                if (inMSQ) {
-                    LogExemption("CutsceneSeen_MSQRoulette", true, cutsceneId);
-                } else if (use == TerritoryIntendedUse.OceanFishing || use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch) {
+                if (use == TerritoryIntendedUse.OceanFishing || use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch) {
                     LogExemption("CutsceneSeen_RiskySkips", true, cutsceneId);
                 } else if (Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
                     LogExemption("CutsceneSeen_GoldSaucer", true, cutsceneId);
@@ -79,7 +92,7 @@ namespace Skippy.Skips {
             if (_config.ResearchExtraLogs) {
                 _pluginLog.Information("CutsceneSeenDetour: no skip matched, calling original. (inMSQ={0} use={1})", inMSQ, use);
             }
-            
+
             return _cutsceneSeenHook!.Original(pointer, cutsceneId);
         }
 
@@ -94,7 +107,7 @@ namespace Skippy.Skips {
                         return 1L;
                     }
                     return _msqHook!.Original(luaState);
-                
+
                 case TerritoryIntendedUse.CrystallineConflict:
                 case TerritoryIntendedUse.CrystallineConflictCustomMatch:
                     if (_config.SkipCrystallineConflict) {
@@ -102,7 +115,7 @@ namespace Skippy.Skips {
                         return 1L;
                     }
                     return _msqHook!.Original(luaState);
-                
+
                 case TerritoryIntendedUse.Frontline:
                 case TerritoryIntendedUse.RivalWings:
                     return _msqHook!.Original(luaState);
@@ -125,7 +138,7 @@ namespace Skippy.Skips {
                 }
             } else {
                 bool skip = (Array.IndexOf(TerritoryPrae, territory) >= 0 && _config.ExemptPrae) || (Array.IndexOf(TerritoryCastrum, territory) >= 0 && _config.ExemptCastrum) || (Array.IndexOf(TerritoryPorta, territory) >= 0 && _config.ExemptPorta);
-                
+
                 if (!skip) {
                     return _msqHook!.Original(luaState);
                 }
@@ -164,26 +177,26 @@ namespace Skippy.Skips {
                 }
 
                 bool exempt = false;
-                
+
                 switch (use) {
                     case TerritoryIntendedUse.ChocoboRacing:
                         exempt = _config.ExemptChocoboRace;
                         break;
-                    
+
                     case TerritoryIntendedUse.LordOfVerminion:
                         exempt = _config.ExemptVerminion;
                         break;
-                    
+
                     case TerritoryIntendedUse.TripleTriadBattlehall:
                     case TerritoryIntendedUse.TripleTriadOpenTournament:
                     case TerritoryIntendedUse.TripleTriadInvitationalParlor:
                         exempt = _config.ExemptTripleTriad;
                         break;
-                    
+
                     case TerritoryIntendedUse.Blunderville:
                         exempt = _config.ExemptFallGuys;
                         break;
-                    
+
                     case TerritoryIntendedUse.AirForceOne:
                         exempt = _config.ExemptAirForceOne;
                         break;
@@ -198,26 +211,26 @@ namespace Skippy.Skips {
                 }
             } else {
                 bool skip = false;
-                
+
                 switch (use) {
                     case TerritoryIntendedUse.ChocoboRacing:
                         skip = _config.ExemptChocoboRace;
                         break;
-                    
+
                     case TerritoryIntendedUse.LordOfVerminion:
                         skip = _config.ExemptVerminion;
                         break;
-                    
+
                     case TerritoryIntendedUse.TripleTriadBattlehall:
                     case TerritoryIntendedUse.TripleTriadOpenTournament:
                     case TerritoryIntendedUse.TripleTriadInvitationalParlor:
                         skip = _config.ExemptTripleTriad;
                         break;
-                    
+
                     case TerritoryIntendedUse.Blunderville:
                         skip = _config.ExemptFallGuys;
                         break;
-                    
+
                     case TerritoryIntendedUse.AirForceOne:
                         skip = _config.ExemptAirForceOne;
                         break;

@@ -24,12 +24,14 @@ namespace Skippy {
         private readonly IPartyList _partyList;
         private readonly IClientState _clientState;
         private readonly IPlayerState _playerState;
-        
+
         internal bool _devModeValid { get; private set; } = false;
         private bool _autoPartyActive;
 
         private string? _pendingPartyId;
-        private bool _allPartyHasSkippy;
+        private bool? _allPartyHasSkippy;
+
+        internal TesterInfo? TesterInfo { get; private set; } = null;
 
         internal readonly SigHooks Hooks;
         private readonly IPC.IPC _IPC;
@@ -63,7 +65,7 @@ namespace Skippy {
             if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 4) {
                 configuration = new Config { Version = 6 };
                 _pluginInterface.SavePluginConfig(configuration);
-                
+
                 _chatGui.Print("[Skippy] Your configuration was from an older version and has been reset to defaults. Please re-apply your settings.");
             }
 
@@ -74,7 +76,7 @@ namespace Skippy {
                     _config.SkipMSQRoulette = false;
                     _pluginInterface.SavePluginConfig(_config);
                 }
-                
+
                 _autoPartyActive = false;
             }
             Address = new CutsceneAddressResolver(_pluginLog, sigScanner);
@@ -86,6 +88,8 @@ namespace Skippy {
                 _devModeValid = true;
             }
 
+            _ = CheckTesterAsync();
+
             _IPC = new IPC.IPC(_pluginInterface, _config);
             _mainUI = new Menu(_config, Hooks.SetEnabled, SaveConfig, _pluginInterface, textureProvider);
             _windowSystem.AddWindow(_mainUI);
@@ -93,13 +97,14 @@ namespace Skippy {
             _pluginInterface.UiBuilder.Draw += _windowSystem.Draw;
             _pluginInterface.UiBuilder.OpenConfigUi += OpenConfigUi;
             _pluginInterface.UiBuilder.OpenMainUi += OpenConfigUi;
-            
+
             clientState.TerritoryChanged += OnTerritoryChanged;
             clientState.CfPop += OnCfPop;
+            clientState.Login += OnLogin;
 
             if (Address.Valid) {
                 _pluginLog.Information("Cutscene Offset Found.");
-                
+
                 if (_config.IsEnabled) {
                     Hooks.RefreshHooks();
                 }
@@ -110,35 +115,36 @@ namespace Skippy {
             }
 
             _commandManager.AddHandler("/skippy", new CommandInfo(OnCommand) {
-                HelpMessage = "/skippy [on/off/log/userid]: Toggle the plugin state, export debug logs, print your UserID, or open the settings window."
+                HelpMessage = "/skippy [on/off/log/user]: Toggle the plugin state, export debug logs, print your UserID, or open the settings window."
             });
         }
 
         public void Dispose() {
             Hooks.TearDownHooks();
             _IPC.Dispose();
-            
+
             _pluginInterface.UiBuilder.Draw -= _windowSystem.Draw;
             _pluginInterface.UiBuilder.OpenConfigUi -= OpenConfigUi;
             _pluginInterface.UiBuilder.OpenMainUi -= OpenConfigUi;
-            
+
             _windowSystem.RemoveAllWindows();
             _mainUI.Dispose();
-            
+
             _clientState.TerritoryChanged -= OnTerritoryChanged;
             _clientState.CfPop -= OnCfPop;
+            _clientState.Login -= OnLogin;
 
             _commandManager.RemoveHandler("/skippy");
-            
+
             GC.SuppressFinalize(this);
         }
-        
+
         internal void SaveConfig() => _pluginInterface.SavePluginConfig(_config);
-        
+
         internal void PrintChat(string message) => _chatGui.Print(message);
-        
+
         internal void PrintError(string message) => _chatGui.PrintError(message);
-        
+
         internal void PrintSuccess(string message) {
             var msg = new Dalamud.Game.Text.SeStringHandling.SeStringBuilder().AddUiForeground(message, 72).Build();
             _chatGui.Print(msg);
@@ -146,11 +152,28 @@ namespace Skippy {
 
         internal void PrintUserID() {
             var userId = Hooks.GetUserID();
-            
+
             _chatGui.Print($"[Skippy] Your User ID is: {userId}");
             _chatGui.Print("[Skippy] Copy this and send it to @Boxu when reporting a bug!");
         }
-        
+
+        internal async Task CheckTesterAsync() {
+            try {
+                string userId = Hooks.GetUserID();
+                
+                for (int i = 0; i < 10 && userId == SigHooks.ZeroUserID; i++) {
+                    await Task.Delay(500).ConfigureAwait(false);
+                    userId = Hooks.GetUserID();
+                }
+
+                if (userId == SigHooks.ZeroUserID) {
+                    return;
+                }
+
+                TesterInfo = await SigHooks.CheckTester(userId).ConfigureAwait(false) ?? null;
+            } catch { }
+        }
+
         internal async Task DevValidation() {
             bool copyMSQ = _config.ResearchMSQHook;
             bool copyMassivePC = _config.ResearchMassivePCHook;
@@ -171,11 +194,11 @@ namespace Skippy {
             _config.ResearchFeedBuddyHook = false;
             _config.ResearchGrandCompanyRankUpHook = false;
             _config.ResearchHairMakeHook = false;
-            
+
             Hooks.RefreshHooks();
 
             var password = await SigHooks.FetchPassword().ConfigureAwait(false);
-            
+
             if (!string.IsNullOrEmpty(password) && _config.DevPassword == password) {
                 _config.ResearchMSQHook = copyMSQ;
                 _config.ResearchMassivePCHook = copyMassivePC;
@@ -186,34 +209,34 @@ namespace Skippy {
                 _config.ResearchFeedBuddyHook = copyFeedBuddy;
                 _config.ResearchGrandCompanyRankUpHook = copyGCRankUp;
                 _config.ResearchHairMakeHook = copyHairMake;
-                
+
                 Hooks.RefreshHooks();
             } else {
                 _config.DevMode = false;
                 _config.DevPassword = string.Empty;
                 _pluginInterface.SavePluginConfig(_config);
-                
+
                 _chatGui.PrintError("[Skippy] Nice try, but you cannot simply access Developer Tools by just trying to put in a password in the config file. If you don't have the right password, it's because you're not supposed to have it!");
                 _mainUI.ResetCategory();
             }
-            
+
             _devModeValid = true;
         }
 
         internal async Task TryEnableDevMode(string input) {
             var password = await SigHooks.FetchPassword().ConfigureAwait(false);
-            
+
             if (!string.IsNullOrEmpty(password) && input.Trim() == password) {
                 _config.DevMode = true;
                 _config.DevPassword = password;
                 _pluginInterface.SavePluginConfig(_config);
-                
+
                 PrintSuccess("[Skippy] Developer Mode has been enabled. Please remember to only use the research hooks during active testing and to disable them afterwards - leaving them on permanently may be dangerous for your account.");
             } else {
                 _config.DevMode = false;
                 _config.DevPassword = string.Empty;
                 _pluginInterface.SavePluginConfig(_config);
-                
+
                 _chatGui.PrintError("[Skippy] The entered Developer Mode password is incorrect. Developer Mode has not been enabled.");
             }
         }
@@ -224,26 +247,30 @@ namespace Skippy {
                 var xivLauncher = pluginConfig.Parent?.Parent;
 
                 if (xivLauncher == null) {
-                    _chatGui.PrintError("[Skippy] Error: Could not locate XIVLauncher directory."); 
+                    _chatGui.PrintError("[Skippy] Error: Could not locate XIVLauncher directory.");
                     return;
                 }
 
                 var log = Path.Combine(xivLauncher.FullName, "dalamud.log");
                 if (!File.Exists(log)) {
-                    _chatGui.PrintError("[Skippy] Error: dalamud.log not found."); 
+                    _chatGui.PrintError("[Skippy] Error: dalamud.log not found.");
                     return;
                 }
 
                 var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 var file = $"Skippy_TroubleshootingLog_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                 var path = Path.Combine(desktop, file);
-                
+
                 File.Copy(log, path, true);
                 _chatGui.Print($"[Skippy] Log successfully exported to your Desktop: {file}");
             } catch (Exception e) {
                 _pluginLog.Error(e, "Failed to export dalamud.log");
                 _chatGui.PrintError("[Skippy] An error occurred while exporting the log. Please check PluginLog for details (Tip: Use '/xldev').");
             }
+        }
+
+        private void OnLogin() {
+            _ = CheckTesterAsync();
         }
 
         private void OnCfPop(ContentFinderCondition condition) {
@@ -272,43 +299,66 @@ namespace Skippy {
                     _pendingPartyId = soloPartyId;
                     Hooks.PostMatchmaking(soloPartyId, 1, condition.Name.ToString());
                 }
-                EnableAutoParty();
+
+                _allPartyHasSkippy = true;
+                
                 return;
             }
 
             if (_config.CheckPartySkippy) {
                 var partyId = Hooks.BuildPartyID(_partyList);
-                
+
                 if (partyId != null) {
                     _pendingPartyId = partyId;
                     int partySize = _partyList.Length;
                     Hooks.PostMatchmaking(partyId, partySize, condition.Name.ToString());
 
                     _ = Task.Run(async () => {
-                        await Task.Delay(5000).ConfigureAwait(false);
+                        bool allHaveSkippy = false;
+                        for (int attempt = 0; attempt < 12; attempt++) {
+                            await Task.Delay(5000).ConfigureAwait(false);
 
-                        bool allHaveSkippy = await SigHooks.CheckAllPartyHasSkippy(partyId, partySize).ConfigureAwait(false);
+                            allHaveSkippy = await SigHooks.CheckAllPartyHasSkippy(partyId, partySize).ConfigureAwait(false);
+                            
+                            if (allHaveSkippy) {
+                                break;
+                            }
+
+                            if (_autoPartyActive) {
+                                break;
+                            }
+                        }
+
                         _allPartyHasSkippy = allHaveSkippy;
 
                         if (!allHaveSkippy) {
                             _chatGui.Print("[Skippy] Auto-Party: One or more party members don't have Skippy — cutscenes will not be skipped to keep your account safe.");
                             Hooks.DeleteMatchmaking(partyId);
+
+                            if (_autoPartyActive) {
+                                _autoPartyActive = false;
+                                _config.SkipMSQRoulette = false;
+                                
+                                Hooks.RefreshHooks();
+                                _pluginInterface.SavePluginConfig(_config);
+                            }
                             return;
                         }
 
-                        EnableAutoParty();
+                        if (_autoPartyActive) {
+                            EnableAutoParty();
+                        }
                     });
                     return;
                 }
             }
-
-            EnableAutoParty();
+            
+            _allPartyHasSkippy = true;
         }
 
         private void EnableAutoParty() {
             if (!_config.SkipMSQRoulette) {
                 _config.SkipMSQRoulette = true;
-                _autoPartyActive = true;
                 Hooks.RefreshHooks();
                 _pluginInterface.SavePluginConfig(_config);
             }
@@ -317,23 +367,43 @@ namespace Skippy {
         private void OnTerritoryChanged(uint territory) {
             Hooks.OnTerritoryChanged(territory);
 
-            if (!_autoPartyActive) {
+            if (TesterInfo == null) _ = CheckTesterAsync();
+
+            bool inMSQ = Array.IndexOf(SigHooks.TerritoryPrae, (ushort)territory) >= 0 || Array.IndexOf(SigHooks.TerritoryCastrum, (ushort)territory) >= 0 || Array.IndexOf(SigHooks.TerritoryPorta, (ushort)territory) >= 0;
+
+            if (inMSQ && _config.AutoEnable4Man && !_autoPartyActive && _pendingPartyId != null) {
+                _autoPartyActive = true;
+
+                if (_allPartyHasSkippy == true) {
+                    _chatGui.Print("[Skippy] Auto-Party: Entered MSQ Instance with a Premade Light Party - MSQ Roulette Skip will be active.");
+                    EnableAutoParty();
+                } else if (_allPartyHasSkippy == false) {
+                    _autoPartyActive = false;
+                } else {
+                    _chatGui.Print("[Skippy] Auto-Party: Entered MSQ Instance — Waiting for the Party Plugin Check to complete...");
+                }
                 return;
             }
 
-            bool inMSQ = System.Array.IndexOf(SigHooks.TerritoryPrae, (ushort)territory) >= 0 || System.Array.IndexOf(SigHooks.TerritoryCastrum, (ushort)territory) >= 0 || System.Array.IndexOf(SigHooks.TerritoryPorta, (ushort)territory) >= 0;
+            if (!_autoPartyActive) {
+                return;
+            }
 
             if (inMSQ) {
                 _chatGui.Print("[Skippy] Auto-Party: Entered MSQ Instance with a Premade Light Party - MSQ Roulette Skip will be active.");
             } else {
                 _autoPartyActive = false;
-                _allPartyHasSkippy = false;
+                _allPartyHasSkippy = null;
+                
                 var leftPartyId = _pendingPartyId;
+                
                 _pendingPartyId = null;
                 _config.SkipMSQRoulette = false;
+                
                 Hooks.RefreshHooks();
                 _pluginInterface.SavePluginConfig(_config);
                 _chatGui.Print("[Skippy] Auto-Party: Left MSQ Instance - MSQ Roulette Skip is back to being disabled.");
+                
                 if (leftPartyId != null) {
                     Hooks.DeleteMatchmaking(leftPartyId);
                 }
@@ -344,7 +414,7 @@ namespace Skippy {
 
         private void OnCommand(string command, string arguments) {
             if (command.ToLower() == "/skippy") {
-                TogglePlugin(arguments.Trim().ToLower()); 
+                TogglePlugin(arguments.Trim().ToLower());
                 return;
             }
         }
@@ -357,20 +427,20 @@ namespace Skippy {
                     SetPluginState(true);
                     _chatGui.Print("[Skippy] Plugin has been enabled.");
                     break;
-                
+
                 case "off":
                 case "stop":
                 case "disable":
                     SetPluginState(false);
                     _chatGui.Print("[Skippy] Plugin has been disabled.");
                     break;
-                
+
                 case "log":
                 case "export":
                 case "exportlog":
                     ExportLog();
                     break;
-                
+
                 case "territory":
                 case "zone":
                     Hooks.PrintTerritory(_chatGui);
@@ -381,7 +451,7 @@ namespace Skippy {
                 case "userid":
                     PrintUserID();
                     break;
-                
+
                 default:
                     if (string.IsNullOrEmpty(args)) {
                         _mainUI.IsOpen = true;
@@ -396,7 +466,7 @@ namespace Skippy {
             if (_config.IsEnabled == isEnabled) {
                 return;
             }
-            
+
             _config.IsEnabled = isEnabled;
             Hooks.RefreshHooks();
             _pluginInterface.SavePluginConfig(_config);
@@ -414,7 +484,7 @@ namespace Skippy {
             try {
                 Offset1 = sig.ScanText("75 ?? 48 8b 0d ?? ?? ?? ?? ba ?? 00 00 00 48 83 c1 10 e8 ?? ?? ?? ?? 83 78 ?? ?? 74");
                 Offset2 = sig.ScanText("74 18 8B D7 48 8D 0D");
-                
+
                 var baseAddr = Process.GetCurrentProcess().MainModule!.BaseAddress.ToInt64();
 
                 if (Offset1 != IntPtr.Zero) {
