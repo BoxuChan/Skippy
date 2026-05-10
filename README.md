@@ -30,7 +30,7 @@ https://puni.sh/api/repository/boxu
 - **/skippy [off/stop/disable]**: Disables Skippy.
 - **/skippy [log/export]**: Exports your Dalamud log file to your Desktop.
 - **/skippy [territory/zone]**: Prints your current territory ID and IntendedUse to chat.
-- **/skippy [userid/id/user]**: Prints your anonymous UserID to chat. Share this with the developer when reporting a bug so your sheet entries can be identified.
+- **/skippy [userid/id/user]**: Prints your anonymous User ID to chat. Share this with the @BoxuChan when reporting a bug so your sheet entries can be identified.
 
 ## How to Use
 
