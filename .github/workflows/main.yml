@@ -37,7 +37,7 @@ jobs:
       - name: Package
         uses: vimtor/action-zip@v1
         with:
-          files: Skippy\bin\x64\Release\Skippy.dll Skippy\bin\x64\Release\Skippy.json Skippy\bin\x64\Release\Skippy.pdb Skippy\bin\x64\Release\icon.png Skippy\bin\x64\Release\README.md Skippy\bin\x64\Release\changelog.json
+          files: Skippy\bin\x64\Release\Skippy.dll Skippy\bin\x64\Release\Skippy.json Skippy\bin\x64\Release\Skippy.pdb Skippy\bin\x64\Release\icon.png Skippy\bin\x64\Release\badge.png Skippy\bin\x64\Release\README.md Skippy\bin\x64\Release\changelog.json
           dest: Skippy\bin\Package\Skippy.zip
 
       - name: Create GitHub Release
