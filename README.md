@@ -30,6 +30,7 @@ https://puni.sh/api/repository/boxu
 - **/skippy [off/stop/disable]**: Disables Skippy.
 - **/skippy [log/export]**: Exports your Dalamud log file to your Desktop.
 - **/skippy [territory/zone]**: Prints your current territory ID and IntendedUse to chat.
+- **/skippy [userid/id/user]**: Prints your anonymous UserID to chat. Share this with the developer when reporting a bug so your sheet entries can be identified.
 
 ## How to Use
 
@@ -73,6 +74,14 @@ I added an extra mode to Skippy, that lets you **Auto-Enable MSQ Roulette Skip f
 If you queue directly into Castrum Meridianum, The Praetorium, or Porta Decumana in **Unrestricted Party** mode, the skip will enable regardless of your premade party's size, since Duty Roulette cannot be queued in Unrestricted.
 
 Enabling Auto-Party Mode will also clear your existing MSQ Roulette settings to avoid conflicts with the automatic management.
+
+### Check Party Members for Skippy
+
+Auto-Party Mode wasn't enough, so I decided to take it to the next level! When enabled, Skippy will now verify that **every member of your party also has Skippy enabled** before enabling the skip on queue pop.
+
+**How does it work?** When the queue pops, each player who have that feature enabled anonymously post a request containing a shared party identifier. After a short while, Skippy checks whether every party member posted one. If they all did, it is safe to skip and the skip enables as normal. If even one player is missing, **the skip will not activate for that run**, so that you can queue with people who don't use plugins and be fine!
+
+Auto-Party Mode is required for it to work, and will automatically disable if Auto-Party Mode is turned off.
 
 ## IPC
 

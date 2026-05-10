@@ -24,11 +24,12 @@ namespace Skippy {
         SkipCrystallineConflict,
         SkipInn,
         AllowCutsceneSeenGlobally,
+        SkipCosmicExploration,
     }
 
     [Serializable]
     public class Config : IPluginConfiguration {
-        public int Version { get; set; } = 5;
+        public int Version { get; set; } = 6;
 
         public bool IsEnabled { get; set; } = true;
 
@@ -38,6 +39,7 @@ namespace Skippy {
         public bool ExemptPorta { get; set; } = false;
 
         public bool SkipMassivePC  { get; set; } = false;
+        public bool SkipCosmicExploration { get; set; } = false;
 
         public bool SkipGoldSaucer { get; set; } = false;
         public bool ExemptChocoboRace { get; set; } = false;
@@ -73,6 +75,8 @@ namespace Skippy {
         public bool SkipInn { get; set; } = false;
 
         public bool AutoEnable4Man { get; set; } = false;
+        
+        public bool CheckPartySkippy { get; set; } = false;
 
         public bool AllowCutsceneSeenGlobally { get; set; } = false;
 

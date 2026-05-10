@@ -5,7 +5,7 @@ using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryInte
 
 namespace Skippy.Skips {
     internal partial class SigHooks {
-        internal static readonly ushort[] TerritoryPrae = [1044, 1045];
+        internal static readonly ushort[] TerritoryPrae = [1044];
         internal static readonly ushort[] TerritoryCastrum = [1043];
         internal static readonly ushort[] TerritoryPorta = [1046];
         private static readonly ushort[] TerritoryMahjong = [831];
@@ -31,7 +31,7 @@ namespace Skippy.Skips {
             if (_config.ResearchExtraLogs) {
                 var use = GetIntendedUse((ushort)territory);
                 var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault((ushort)territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
-                _pluginLog.Information("[Skippy] TerritoryChanged: id={0} name={1} intendedUse={2} ({3})", territory, name, use, (byte)use);
+                _pluginLog.Information("TerritoryChanged: id={0} name={1} intendedUse={2} ({3})", territory, name, use, (byte)use);
             }
             
             bool exempt = IsExemptedTerritory((ushort)territory);

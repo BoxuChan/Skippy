@@ -24,13 +24,23 @@ namespace Skippy.UI {
 
             bool skipAll = _config.SkipMassivePC;
             SectionHeader(skipAll ? "[WIP] Exemptions" : "[WIP] Skip Specific");
-            
-            ImGui.TextWrapped("As I have yet to figure out the details and contents of this signature hook, no " + (skipAll ? "exemptions" : "specific skips") + " are planned just yet.");
-            
+
+            ImGui.TextWrapped(skipAll ? "Any enabled entries in this category will be exempt from the global skip above and cutscenes will play as normal in those instances." : "Any ticked entries in this category will be skipped individually, even if the global skip above is not enabled.");
+
             ImGui.Spacing(); 
             ImGui.Spacing();
-            
-            WipToggle(skipAll ? "Exempt: (Unknown)" : "Skip: (Unknown)");
+
+            bool cosmicChanged = false;
+            bool cosmicSkip = _config.SkipCosmicExploration;
+            string cosmicLabel = skipAll ? "Exempt: Cosmic Exploration" : "Skip: Cosmic Exploration";
+            FeatureCheckbox("##SkipCosmicExploration", cosmicLabel, "Skips cutscenes that trigger within Cosmic Exploration maps. (Sinus Ardorum, Phaenna, Oizys)", ref cosmicSkip, out cosmicChanged);
+
+            if (cosmicChanged) {
+                _config.SkipCosmicExploration = skipAll ? !cosmicSkip : cosmicSkip;
+
+                Skippy.Instance.Hooks.RefreshHooks();
+                _saveConfig();
+            }
         }
     }
 }
