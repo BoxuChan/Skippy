@@ -20,52 +20,55 @@ namespace Skippy.Skips {
             var use = GetIntendedUse(territory);
 
             if (_config.SkipMSQRoulette && inMSQ) {
-                LogExemption("CutsceneSeen_MSQRoulette", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipOceanFishing && use == TerritoryIntendedUse.OceanFishing) {
-                LogExemption("CutsceneSeen_OceanFishing", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipCrystallineConflict && (use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch)) {
-                LogExemption("CutsceneSeen_CrystallineConflict", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipMassivePC) {
-                LogExemption("CutsceneSeen_MassivePC", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipGoldSaucer && Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
-                LogExemption("CutsceneSeen_GoldSaucer", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipCustomTalk) {
-                LogExemption("CutsceneSeen_CustomTalk", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipNormalCutscenes) {
-                LogExemption("CutsceneSeen_NormalCutscenes", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipFeedBuddy) {
-                LogExemption("CutsceneSeen_FeedBuddy", true, cutsceneId);
                 return true;
             }
 
             if (_config.SkipInn) {
-                LogExemption("CutsceneSeen_Inn", true, cutsceneId);
                 return true;
             }
-
+            
             if (_config.AllowCutsceneSeenGlobally) {
-                LogExemption("CutsceneSeen_Global", true, cutsceneId);
+                if (inMSQ) {
+                    LogExemption("CutsceneSeen_MSQRoulette", true, cutsceneId);
+                } else if (use == TerritoryIntendedUse.OceanFishing || use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch) {
+                    LogExemption("CutsceneSeen_RiskySkips", true, cutsceneId);
+                } else if (Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
+                    LogExemption("CutsceneSeen_GoldSaucer", true, cutsceneId);
+                } else if (IsWorkshopTerritory()) {
+                    LogExemption("CutsceneSeen_CustomTalk", true, cutsceneId);
+                } else if (use == TerritoryIntendedUse.Inn) {
+                    LogExemption("CutsceneSeen_RiskySkips", true, cutsceneId);
+                } else {
+                    LogExemption("CutsceneSeen_NormalCutscenes", true, cutsceneId);
+                }
                 return true;
             }
 
@@ -82,11 +85,19 @@ namespace Skippy.Skips {
 
             switch (use) {
                 case TerritoryIntendedUse.OceanFishing:
-                    return _config.SkipOceanFishing ? 1L : _msqHook!.Original(luaState);
+                    if (_config.SkipOceanFishing) {
+                        LogExemption("RiskySkips");
+                        return 1L;
+                    }
+                    return _msqHook!.Original(luaState);
                 
                 case TerritoryIntendedUse.CrystallineConflict:
                 case TerritoryIntendedUse.CrystallineConflictCustomMatch:
-                    return _config.SkipCrystallineConflict ? 1L : _msqHook!.Original(luaState);
+                    if (_config.SkipCrystallineConflict) {
+                        LogExemption("RiskySkips");
+                        return 1L;
+                    }
+                    return _msqHook!.Original(luaState);
                 
                 case TerritoryIntendedUse.Frontline:
                 case TerritoryIntendedUse.RivalWings:
@@ -263,23 +274,34 @@ namespace Skippy.Skips {
                 }
             }
 
-            LogExemption("NormalCutscenes");
+            // Submarine trigger via NormalCutscenes but are part of CustomTalk
+            LogExemption(isWorkshop ? "CustomTalk" : "NormalCutscenes");
             return 1L;
         }
 
         private long ExemptionInn(nint luaState) {
             if (_config.ResearchInnHook) {
                 LogExemption("Dev_InnHook");
+                return 1L;
             }
-            
+
+            if (!_config.SkipInn)
+                return _innHook!.Original(luaState);
+
+            LogExemption("RiskySkips");
             return 1L;
         }
 
         private long ExemptionFeedBuddy(nint luaState) {
             if (_config.ResearchFeedBuddyHook) {
                 LogExemption("Dev_FeedBuddyHook");
+                return 1L;
             }
-            
+
+            if (!_config.SkipFeedBuddy)
+                return _feedBuddyHook!.Original(luaState);
+
+            LogExemption("FeedBuddy");
             return 1L;
         }
     }

@@ -1,13 +1,9 @@
 [
   {
-    "version": "2.2.3.0",
-    "date": "2026-05-09",
+    "version": "2.2.3.1",
+    "date": "2026-05-10",
     "changes": [
-      "Global: (Bugfix) The memory patch that allows cutscenes to be skipped is now only applied when a skip category actually applies to the cutscene. It will no longer cause first-time cutscene views to be skipped with no relevant skip active.",
-      "Global: (Bugfix) Auto-Party Mode now fully resets its internal state on plugin load, and after a session ends so that no bad config remains after force-closed session or a crash.",
-      "Behaviour: Added a new Behaviour category with an opt-in toggle for players who want to skip first-time cutscene views everywhere in the game. This is disabled by default.",
-      "Commands: Removed the /sc sanity check command due to not being needed anymore.",
-      "IPC: Added AllowCutsceneSeenGlobally to GetSkippedCategories and GetConfig."
+      "Logger: (Bugfix) Various Categories weren't logging properly, making it hard for hook research to take place, this has now been fixed."
     ]
   }
 ]

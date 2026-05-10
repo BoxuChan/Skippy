@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
-    <PropertyGroup>
-        <Description>Skip all of the Cutscenes that bother you (MSQ Roulette for example) so you can actually play the game!</Description>
-        <PackageProjectUrl>https://github.com/BoxuChan/Skippy</PackageProjectUrl>
-        <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
-        <IsPackable>false</IsPackable>
-        <AssemblyVersion>2.2.3.0</AssemblyVersion>
-    </PropertyGroup>
+	<PropertyGroup>
+		<Description>Skip all of the Cutscenes that bother you (MSQ Roulette for example) so you can actually play the game!</Description>
+		<PackageProjectUrl>https://github.com/BoxuChan/Skippy</PackageProjectUrl>
+		<PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+		<IsPackable>false</IsPackable>
+		<AssemblyVersion>2.2.3.1</AssemblyVersion>
+	</PropertyGroup>
 	<PropertyGroup>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
+	</PropertyGroup>
 	<ItemGroup>
 		<Content Include="assets\icon.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
