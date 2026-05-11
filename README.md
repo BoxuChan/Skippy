@@ -30,7 +30,7 @@ https://puni.sh/api/repository/boxu
 - **/skippy [off/stop/disable]**: Disables Skippy.
 - **/skippy [log/export]**: Exports your Dalamud log file to your Desktop.
 - **/skippy [territory/zone]**: Prints your current territory ID and IntendedUse to chat.
-- **/skippy [userid/id/user]**: Prints your anonymous User ID to chat. Share this with the @BoxuChan when reporting a bug so your sheet entries can be identified.
+- **/skippy [userid/id/user]**: Prints your anonymous User ID to chat. Share this with @BoxuChan when reporting a bug so your sheet entries can be identified.
 
 ## How to Use
 
@@ -75,7 +75,7 @@ If you queue directly into Castrum Meridianum, The Praetorium, or Porta Decumana
 
 Enabling Auto-Party Mode will also clear your existing MSQ Roulette settings to avoid conflicts with the automatic management.
 
-### Check Party Members for Skippy
+## Check Party Members for Skippy
 
 Auto-Party Mode wasn't enough, so I decided to take it to the next level! When enabled, Skippy will now verify that **every member of your party also has Skippy enabled** before enabling the skip on queue pop.
 
@@ -112,6 +112,7 @@ public enum SkippedCategory {
     ExemptCastrum,
     ExemptPorta,
     SkipMassivePC,
+    SkipCosmicExploration,
     SkipGoldSaucer,
     ExemptChocoboRacing,
     ExemptVerminion,
@@ -134,4 +135,14 @@ Returns the full configuration information of Skippy as a key/value map.
 
 ```csharp
 var config = pluginInterface.GetIpcSubscriber<Dictionary<string, bool>>("Skippy.GetConfig").InvokeFunc();
+```
+
+The dictionary contains the following keys:
+
+```
+AutoEnable4Man, IsEnabled, SkipMSQRoulette, ExemptPrae, ExemptCastrum, ExemptPorta,
+SkipMassivePC, SkipCosmicExploration, SkipGoldSaucer, ExemptChocoboRacing, ExemptVerminion,
+ExemptTripleTriad, ExemptFallGuys, ExemptAirForceOne, ExemptMahjong, SkipCustomTalk,
+SkipNormalCutscenes, SkipFeedBuddy, SkipOceanFishing, SkipCrystallineConflict, SkipInn,
+AllowCutsceneSeenGlobally
 ```

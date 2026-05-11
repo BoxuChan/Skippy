@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -5,26 +6,50 @@ using Dalamud.Interface;
 namespace Skippy.UI {
     internal sealed partial class Menu {
         private void UIRiskySkips() {
-            var bannerHeight = ImGui.GetStyle().ItemSpacing.Y * 5f + ImGui.GetTextLineHeight() * 3f + 14f;
-            
+            const string line1 = "All of the skips underneath are experimental and may carry a ban risk.";
+            const string line2 = "Please only enable them if you accept full responsibility.";
+
             ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(0.35f, 0.08f, 0.04f, 0.90f));
             ImGui.PushStyleColor(ImGuiCol.Border, new Vector4(0.80f, 0.20f, 0.10f, 0.90f));
             ImGui.PushStyleVar(ImGuiStyleVar.ChildBorderSize, 1.5f);
 
+            // Measure wrap width based on available content minus child window padding on both sides
+            var wrapWidth = ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X * 2f - 4f;
+            if (wrapWidth < 10f) wrapWidth = 10f;
+
+            var textLine1Size = ImGui.CalcTextSize(line1, false, wrapWidth);
+            var textLine2Size = ImGui.CalcTextSize(line2, false, wrapWidth);
+
+            // CalcTextSize returns total pixel height for wrapped text but doesn't include the
+            // ItemSpacing.Y gap that ImGui adds between each TextUnformatted call in WrappedCenteredText.
+            // Count the number of wrapped lines to add the correct inter-line spacing.
+            var lineHeight = ImGui.GetTextLineHeight();
+            var line1Count = (int)MathF.Round(textLine1Size.Y / lineHeight);
+            var line2Count = (int)MathF.Round(textLine2Size.Y / lineHeight);
+            if (line1Count < 1) line1Count = 1;
+            if (line2Count < 1) line2Count = 1;
+
+            var icon = FontAwesomeIcon.ExclamationTriangle.ToIconString();
+            float iconWidth;
+            using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
+                iconWidth = ImGui.CalcTextSize(icon).X;
+            }
+            var labelWidth = ImGui.CalcTextSize(" Warning").X;
+
+            var spacing = ImGui.GetStyle().ItemSpacing.Y;
+            var bannerHeight = spacing * 4f
+                               + ImGui.GetTextLineHeight()
+                               + textLine1Size.Y + (line1Count - 1) * spacing
+                               + textLine2Size.Y + (line2Count - 1) * spacing
+                               + ImGui.GetStyle().WindowPadding.Y * 2f
+                               + 4f;
+
             if (ImGui.BeginChild("##Banner", new Vector2(-1, bannerHeight), true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
                 ImGui.Spacing();
                 ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.40f, 0.30f, 1f));
-                
-                var icon = FontAwesomeIcon.ExclamationTriangle.ToIconString();
-                float iconWidth;
 
-                using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
-                    iconWidth = ImGui.CalcTextSize(icon).X;
-                }
-
-                var labelWidth = ImGui.CalcTextSize(" Warning").X;
                 var avail = ImGui.GetContentRegionAvail().X;
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (avail - iconWidth - labelWidth) * 0.5f);
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (avail - iconWidth - 4f - labelWidth) * 0.5f);
                 
                 using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
                     ImGui.TextUnformatted(icon);
@@ -37,8 +62,8 @@ namespace Skippy.UI {
                 ImGui.Spacing();
                 
                 ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.90f, 0.75f, 0.70f, 1f));
-                CenteredText("All of the skips underneath are experimental and may carry a ban risk.");
-                CenteredText("Please only enable them if you accept full responsibility.");
+                WrappedCenteredText(line1, wrapWidth);
+                WrappedCenteredText(line2, wrapWidth);
                 ImGui.PopStyleColor();
                 
                 ImGui.Spacing();

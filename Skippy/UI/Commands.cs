@@ -26,7 +26,7 @@ namespace Skippy.UI {
                 Row("/skippy", "off / stop / disable", "Disables Skippy.");
                 Row("/skippy", "log / export", "Exports your Dalamud log to your Desktop.");
                 Row("/skippy", "territory / zone", "Prints the current territory ID and IntendedUse to chat.");
-                Row("/skippy", "user / userid / id", "Prints your anonymous UserID to chat so you can copy it and send it when reporting a bug.");
+                Row("/skippy", "user / userid / id", "Prints your anonymous User ID to chat so you can copy it and send it when reporting a bug.");
 
                 ImGui.EndTable();
             }

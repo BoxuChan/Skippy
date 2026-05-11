@@ -45,7 +45,7 @@ namespace Skippy.UI {
 
         internal static readonly HttpClient Http = new();
 
-        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.4.1###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
+        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.4.2###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
             _config = config;
             _setEnabled = setEnabled;
             _saveConfig = saveConfig;
@@ -70,7 +70,7 @@ namespace Skippy.UI {
                 
                 Click = _ => OpenUrl("https://ko-fi.com/boxu_chan")
             });
-
+            
             TitleBarButtons.Add(new TitleBarButton {
                 Icon = FontAwesomeIcon.Cog,
                 IconOffset = new Vector2(0, 1),
@@ -110,6 +110,20 @@ namespace Skippy.UI {
                     }
                 }
             });
+            
+            TitleBarButtons.Add(new TitleBarButton { 
+                Icon = FontAwesomeIcon.Star, 
+                IconOffset = new Vector2(0, 1),
+                ShowTooltip = () => {
+                    using var tooltip = ImRaii.Tooltip();
+                    ImGui.TextUnformatted(_config.HideBadge ? "Show Badge" : "Hide Badge");
+                },
+                    
+                Click = _ => {
+                    _config.HideBadge = !_config.HideBadge;
+                    _saveConfig();
+                }
+            });
         }
 
         internal void ResetCategory() => _category = Category.MSQRoulette;
@@ -117,7 +131,7 @@ namespace Skippy.UI {
         public void Dispose() { }
 
         private bool _theme;
-        private const int ThemeColor = 10;
+        private const int ThemeColor = 9;
 
         public override void PreDraw() {
             if (!_theme) {
@@ -130,7 +144,6 @@ namespace Skippy.UI {
                 ImGui.PushStyleColor(ImGuiCol.FrameBg, new Vector4(0.14f, 0.14f, 0.28f, 0.54f));
                 ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, new Vector4(0.22f, 0.22f, 0.50f, 0.40f));
                 ImGui.PushStyleColor(ImGuiCol.CheckMark, new Vector4(0.55f, 0.55f, 1.00f, 1.00f));
-                ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.10f, 0.10f, 0.30f, 1.00f));
                 
                 _theme = true;
             }
@@ -151,6 +164,9 @@ namespace Skippy.UI {
             if (!ImGui.BeginTable("##Layout", 2, ImGuiTableFlags.None)) {
                 return;
             }
+
+            Vector2 _skipsChildScreenPos = default;
+            Vector2 _skipsChildScreenSize = default;
 
             try {
                 ImGui.TableSetupColumn("##Menu", ImGuiTableColumnFlags.WidthFixed, 200f);
@@ -173,6 +189,7 @@ namespace Skippy.UI {
 
                 if (ImGui.BeginChild("##Categories", new Vector2(0, topHeight - topUsed), false, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize)) {
                     bool error = !Skippy.Instance.Address.Valid;
+                    
                     NavItem("MSQ Roulette", Category.MSQRoulette, _config.SkipMSQRoulette || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta, error, _config.AutoEnable4Man ? new Vector4(0.90f, 0.85f, 0.55f, 1f) : null);
                     NavItem("Large-Scale Content", Category.MassivePC, _config.SkipMassivePC, error);
                     NavItem("Gold Saucer", Category.GoldSaucer, _config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys, error);
@@ -275,8 +292,6 @@ namespace Skippy.UI {
                 ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, new Vector4(0.24f, 0.24f, 0.55f, 0.95f));
 
                 var flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysVerticalScrollbar;
-                Vector2 _skipsChildScreenPos = default;
-                Vector2 _skipsChildScreenSize = default;
                 
                 if (ImGui.BeginChild("##Skips", new Vector2(0, topHeight), false, flags)) {
                     _skipsChildScreenPos = ImGui.GetWindowPos();
@@ -350,26 +365,26 @@ namespace Skippy.UI {
                     if (disabled) {
                         ImGui.EndDisabled();
                     }
-
+                    
+                    var _testerInfo = Skippy.Instance.TesterInfo;
+                    
+                    if (_skipsChildScreenSize != default && !_config.HideBadge) {
+                        DrawTesterBadgeButton(_skipsChildScreenPos, _skipsChildScreenSize, _testerInfo);
+                    }
+                    
                     ImGui.Spacing(); 
                     ImGui.Spacing();
                     ImGui.EndGroup();
                     ImGui.PopTextWrapPos();
                     ImGui.PopItemWidth();
-
-                    var _testerInfo = Skippy.Instance.TesterInfo;
-                    
-                    if (_testerInfo != null && _skipsChildScreenSize != default) {
-                        DrawTesterBadgeButton(_skipsChildScreenPos, _skipsChildScreenSize, _testerInfo);
-                    }
+                }
+                
+                if (_skipsChildScreenSize != default && !_config.HideBadge) {
+                    DrawTesterBadgeImage(_skipsChildScreenPos, _skipsChildScreenSize, Skippy.Instance.TesterInfo);
                 }
                 
                 ImGui.EndChild();
-
-                if (Skippy.Instance.TesterInfo != null && _skipsChildScreenSize != default) {
-                    DrawTesterBadgeImage(_skipsChildScreenPos, _skipsChildScreenSize);
-                }
-
+                
                 ImGui.PopStyleColor(4);
                 ImGui.PopStyleVar(2);
             } catch (Exception e) {
@@ -401,63 +416,88 @@ namespace Skippy.UI {
         private bool _showTesterPopup;
         private bool _testerPopupOpen;
         private ISharedImmediateTexture? _badgeIcon;
+        private ISharedImmediateTexture? _badgeGreyIcon;
 
         private const float BadgeSize = 36f;
         private const float BadgePadRight = 20f;
         private const float BadgePadBot = 8f;
 
         private static Vector2 CalcBadgeScreenPos(Vector2 childScreenPos, Vector2 childScreenSize) => new Vector2(childScreenPos.X + childScreenSize.X - BadgeSize - BadgePadRight, childScreenPos.Y + childScreenSize.Y - BadgeSize - BadgePadBot);
-        
-        private void DrawTesterBadgeButton(Vector2 childScreenPos, Vector2 childScreenSize, TesterInfo testerInfo) {
+
+        private void DrawTesterBadgeButton(Vector2 childScreenPos, Vector2 childScreenSize, TesterInfo? testerInfo) {
             var screenPos = CalcBadgeScreenPos(childScreenPos, childScreenSize);
 
             ImGui.SetCursorScreenPos(screenPos);
             bool clicked = ImGui.InvisibleButton("##TesterBadgeOverlay", new Vector2(BadgeSize, BadgeSize));
             bool hovered = ImGui.IsItemHovered();
 
-            if (clicked) {
-                _showTesterPopup = true;
-            }
+            if (testerInfo != null) {
+                if (clicked) {
+                    _showTesterPopup = true;
+                }
 
-            if (hovered) {
-                using var tooltip = ImRaii.Tooltip();
-                ImGui.TextUnformatted($"Skippy Supporter  |  {testerInfo.Nickname}");
+                if (hovered) {
+                    using var tooltip = ImRaii.Tooltip();
+                    ImGui.TextUnformatted($"Skippy Tester  |  {testerInfo.Nickname}");
+                }
+            } else {
+                if (hovered) {
+                    using var tooltip = ImRaii.Tooltip();
+                    ImGui.TextUnformatted("You aren't a Skippy Tester!");
+                }
             }
         }
 
-        private void DrawTesterBadgeImage(Vector2 childScreenPos, Vector2 childScreenSize) {
-            if (_badgeIcon == null) {
-                var dir = _pluginInterface.AssemblyLocation.DirectoryName!;
-                var path = Path.Combine(dir, "badge.png");
-                
-                if (File.Exists(path)) {
-                    try {
-                        _badgeIcon = _tex.GetFromFile(path);
-                    } catch { }
+        private void DrawTesterBadgeImage(Vector2 childScreenPos, Vector2 childScreenSize, TesterInfo? testerInfo) {
+            var dir = _pluginInterface.AssemblyLocation.DirectoryName!;
+            bool isTester = testerInfo != null;
+
+            if (isTester) {
+                if (_badgeIcon == null) {
+                    var path = Path.Combine(dir, "badge.png");
+                    
+                    if (File.Exists(path)) {
+                        try {
+                            _badgeIcon = _tex.GetFromFile(path);
+                        } catch { }
+                    }
+                }
+            } else {
+                if (_badgeGreyIcon == null) {
+                    var path = Path.Combine(dir, "badge_grey.png");
+                    
+                    if (File.Exists(path)) {
+                        try {
+                            _badgeGreyIcon = _tex.GetFromFile(path);
+                        } catch { }
+                    }
                 }
             }
 
             var screenPos = CalcBadgeScreenPos(childScreenPos, childScreenSize);
-
             IDalamudTextureWrap? badgeWrap = null;
-            _badgeIcon?.TryGetWrap(out badgeWrap, out _);
             
+            if (isTester) {
+                _badgeIcon?.TryGetWrap(out badgeWrap, out _);
+            } else {
+                _badgeGreyIcon?.TryGetWrap(out badgeWrap, out _);
+            }
+
             var drawList = ImGui.GetWindowDrawList();
             drawList.PushClipRect(childScreenPos, childScreenPos + childScreenSize, false);
 
-            bool popupOpen = ImGui.IsPopupOpen("", ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
             var mouse = ImGui.GetIO().MousePos;
-            bool hovered = !popupOpen && mouse.X >= screenPos.X && mouse.X <= screenPos.X + BadgeSize && mouse.Y >= screenPos.Y && mouse.Y <= screenPos.Y + BadgeSize;
+            bool hovered = mouse.X >= screenPos.X && mouse.X <= screenPos.X + BadgeSize && mouse.Y >= screenPos.Y && mouse.Y <= screenPos.Y + BadgeSize;
 
             if (badgeWrap != null) {
                 var badgeEnd = screenPos + new Vector2(BadgeSize, BadgeSize);
                 drawList.AddImage(badgeWrap.Handle, screenPos, badgeEnd, Vector2.Zero, Vector2.One, 0xFFFFFFFF);
 
-                if (hovered) {
+                if (isTester && hovered) {
                     drawList.AddImage(badgeWrap.Handle, screenPos, badgeEnd, Vector2.Zero, Vector2.One, 0x66FFFFFF);
                 }
             } else {
-                uint starCol = hovered ? 0xFF44DDFF : 0xFF22BBEE;
+                uint starCol = isTester ? (hovered ? 0xFF44DDFF : 0xFF22BBEE) : 0xFF888888;
                 drawList.AddText(ImGui.GetFont(), BadgeSize, screenPos, starCol, "★");
             }
 
@@ -595,7 +635,9 @@ namespace Skippy.UI {
                 ImGui.PopStyleColor();
                 ImGui.Spacing();
                 
-                ImGui.TextWrapped("The skips contained within this category are very experimental and may carry a heavy ban risk.\n\n" + "By enabling any of these, you accept full responsibility for any consequences, I, the developer, have no responsibility in your choice of usages.");
+                ImGui.PushTextWrapPos(0f);
+                ImGui.TextWrapped("The skips contained within this category are very experimental and may carry a heavy ban risk.\n\nBy enabling any of these, you accept full responsibility for any consequences, I, the developer, have no responsibility in your choice of usages.");
+                ImGui.PopTextWrapPos();
                 
                 ImGui.Spacing();
                 ImGui.Separator();
@@ -886,6 +928,23 @@ namespace Skippy.UI {
             
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (width - textWidth) * 0.5f);
             ImGui.Text(text);
+        }
+
+        internal static void WrappedCenteredText(string text, float wrapWidth) {
+            var avail = ImGui.GetContentRegionAvail().X;
+            var baseX = ImGui.GetCursorPosX();
+
+            foreach (var line in WrapText(text, wrapWidth)) {
+                var lineWidth = ImGui.CalcTextSize(line).X;
+                var offsetX = (avail - lineWidth) * 0.5f;
+                
+                if (offsetX < 0f) {
+                    offsetX = 0f;
+                }
+                
+                ImGui.SetCursorPosX(baseX + offsetX);
+                ImGui.TextUnformatted(line);
+            }
         }
 
         internal static void WipToggle(string label) {

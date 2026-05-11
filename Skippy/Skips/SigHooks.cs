@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Dalamud;
 using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.Game.UI; 
 using Lumina.Excel.Sheets;
 
 using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
@@ -191,8 +191,22 @@ namespace Skippy.Skips {
         internal void RefreshHooks() {
             bool exempt = IsExemptedTerritory((ushort)_clientState.TerritoryType);
             SetEnabled(_config.IsEnabled && !exempt && ShouldPatchMemory());
+            bool devMode = _config.DevMode;
 
-            bool msq = _config.IsEnabled && (_config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta || _config.ResearchMSQHook);
+            if (!devMode) {
+                _config.ResearchMSQHook = false;
+                _config.ResearchMassivePCHook = false;
+                _config.ResearchGoldSaucerHook = false;
+                _config.ResearchCustomTalkHook = false;
+                _config.ResearchNormalCutscenesHook = false;
+                _config.ResearchInnHook = false;
+                _config.ResearchFeedBuddyHook = false;
+                _config.ResearchGrandCompanyRankUpHook = false;
+                _config.ResearchHairMakeHook = false;
+                _config.ResearchExtraLogs = false;
+            }
+
+            bool msq = (_config.IsEnabled && (_config.SkipMSQRoulette || _config.SkipOceanFishing || _config.SkipCrystallineConflict || _config.ExemptPrae || _config.ExemptCastrum || _config.ExemptPorta)) || (devMode && _config.ResearchMSQHook);
             const string msqSig = "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 84 99 ?? ?? ?? ??";
 
             if (msq) {
@@ -211,22 +225,22 @@ namespace Skippy.Skips {
                 _msqHook = null;
             }
 
-            RefreshContentDirectorHook(ref _massivePCHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 8B 11", _config.IsEnabled && (_config.SkipMassivePC || _config.SkipCosmicExploration || _config.ResearchMassivePCHook), ExemptionMassivePC);
+            RefreshContentDirectorHook(ref _massivePCHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 8B 11", (_config.IsEnabled && (_config.SkipMassivePC || _config.SkipCosmicExploration)) || (devMode && _config.ResearchMassivePCHook), ExemptionMassivePC);
 
-            bool goldSaucer = _config.IsEnabled && (_config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys || _config.ExemptAirForceOne || _config.ExemptMahjong || _config.ResearchGoldSaucerHook);
+            bool goldSaucer = (_config.IsEnabled && (_config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys || _config.ExemptAirForceOne || _config.ExemptMahjong)) || (devMode && _config.ResearchGoldSaucerHook);
             RefreshContentDirectorHook(ref _goldSaucerHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 84 99 ?? ?? ?? ??", goldSaucer, ExemptionGoldSaucer);
 
-            RefreshContentDirectorHook(ref _customTalkHook, "48 83 EC 58 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 85 C9 74 06", _config.IsEnabled && (_config.SkipCustomTalk || _config.ResearchCustomTalkHook), ExemptionCustomTalk);
+            RefreshContentDirectorHook(ref _customTalkHook, "48 83 EC 58 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 85 C9 74 06", (_config.IsEnabled && _config.SkipCustomTalk) || (devMode && _config.ResearchCustomTalkHook), ExemptionCustomTalk);
 
-            RefreshNormalCutscenesHook(_config.IsEnabled && (_config.SkipNormalCutscenes || _config.SkipCosmicExploration || _config.ExemptSubmarines || _config.ResearchNormalCutscenesHook));
+            RefreshNormalCutscenesHook((_config.IsEnabled && (_config.SkipNormalCutscenes || _config.SkipCosmicExploration || _config.ExemptSubmarines)) || (devMode && _config.ResearchNormalCutscenesHook));
 
-            RefreshInnHook(_config.IsEnabled && (_config.SkipInn || _config.ResearchInnHook));
+            RefreshInnHook((_config.IsEnabled && _config.SkipInn) || (devMode && _config.ResearchInnHook));
 
-            RefreshFeedBuddyHook(_config.IsEnabled && (_config.SkipFeedBuddy || _config.ResearchFeedBuddyHook));
+            RefreshFeedBuddyHook((_config.IsEnabled && _config.SkipFeedBuddy) || (devMode && _config.ResearchFeedBuddyHook));
 
-            RefreshSinglePtrHook(ref _grandCompanyRankUpHook, "40 53 48 83 EC 50 48 8B D9 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 83 38 00 0F 84 ?? ?? ?? ?? 48 8B 5B 08 E8 ?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 48 83 7B ?? ?? 75 04 33 DB EB 2D 48 8B 4B 60 48 8B 53 58 48 FF C9 48 03 D1 48 8B 4B 50 48 8B C2 48 FF C9 48 D1 E8 48 23 C8 48 8B 43 48 83 E2 01 48 8B 04 C8 48 8B 1C D0 48 8B 0D ?? ?? ?? ?? 48 89 1D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C8 48 8B 10 FF 92 ?? ?? ?? ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 48 8B C8 E8 ?? ?? ?? ?? 33 D2 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8D 4C 24 ?? 8B D8 E8 ?? ?? ?? ?? 8B C3 48 83 C4 50 5B C3 33 DB 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 8B C3 48 83 C4 50 5B C3 CC CC CC CC CC CC CC CC 40 55 53 48 8D 6C 24 ??", _config.IsEnabled && _config.ResearchGrandCompanyRankUpHook, _ => { LogExemption("Dev_GCRankup"); return 1L; });
+            RefreshSinglePtrHook(ref _grandCompanyRankUpHook, "40 53 48 83 EC 50 48 8B D9 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 83 38 00 0F 84 ?? ?? ?? ?? 48 8B 5B 08 E8 ?? ?? ?? ?? 33 D2 48 8B C8 E8 ?? ?? ?? ?? 48 83 7B ?? ?? 75 04 33 DB EB 2D 48 8B 4B 60 48 8B 53 58 48 FF C9 48 03 D1 48 8B 4B 50 48 8B C2 48 FF C9 48 D1 E8 48 23 C8 48 8B 43 48 83 E2 01 48 8B 04 C8 48 8B 1C D0 48 8B 0D ?? ?? ?? ?? 48 89 1D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C8 48 8B 10 FF 92 ?? ?? ?? ?? 48 8B C8 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 48 8B C8 E8 ?? ?? ?? ?? 33 D2 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8D 4C 24 ?? 8B D8 E8 ?? ?? ?? ?? 8B C3 48 83 C4 50 5B C3 33 DB 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 8B C3 48 83 C4 50 5B C3 CC CC CC CC CC CC CC CC 40 55 53 48 8D 6C 24 ??", devMode && _config.ResearchGrandCompanyRankUpHook, _ => { LogExemption("Dev_GCRankup"); return 1L; });
 
-            RefreshSinglePtrHook(ref _hairMakeHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D9 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 5B 08 33 D2 45 33 C0 8D 4A 28 E8 ?? ?? ?? ?? 48 85 C0", _config.IsEnabled && _config.ResearchHairMakeHook, _ => { LogExemption("Dev_Aesthetician"); return 1L; });
+            RefreshSinglePtrHook(ref _hairMakeHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D9 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 5B 08 33 D2 45 33 C0 8D 4A 28 E8 ?? ?? ?? ?? 48 85 C0", devMode && _config.ResearchHairMakeHook, _ => { LogExemption("Dev_Aesthetician"); return 1L; });
         }
 
         private void RefreshContentDirectorHook(ref Hook<ContentDirectorDelegate>? hook, string sig, bool enable, ContentDirectorDelegate? exempt = null) {
@@ -360,7 +374,7 @@ namespace Skippy.Skips {
             }
         }
 
-        private const string Version = "2.2.4.1";
+        private const string Version = "2.2.4.2";
 
         internal static async Task<string> FetchPassword() {
             try {
@@ -394,7 +408,8 @@ namespace Skippy.Skips {
             var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
 
             if (_config.ResearchExtraLogs) {
-                _pluginLog.Information("{0} — territory={1} ({2}) intendedUse={3} isCutsceneSeen={4} cutsceneId={5}", hook, territory, name, use, isCutsceneSeen, cutsceneId);
+                bool isDev = hook.StartsWith("Dev_");
+                _pluginLog.Information("Hook Fired: {0}\n" + "--> Territory: {1} ({2})  IntendedUse: {3} ({4})\n" + "--> IsCutsceneSeen: {5}  CutsceneId: {6}\n" + "--> IsDevHook: {7}  DevMode: {8}  DevModeValid: {9}\n" + "--> Plugin: IsEnabled={10}  SkipMSQRoulette={11}  SkipMassivePC={12}  SkipGoldSaucer={13}\n" + "--> Plugin: SkipCustomTalk={14}  SkipNormalCutscenes={15}  SkipFeedBuddy={16}  SkipInn={17}\n" + "--> Plugin: SkipOceanFishing={18}  SkipCrystallineConflict={19}  SkipCosmicExploration={20}\n" + "--> Exemptions: ExemptPrae={21}  ExemptCastrum={22}  ExemptPorta={23}  ExemptSubmarines={24}\n" + "--> Exemptions: ExemptChocoboRace={25}  ExemptVerminion={26}  ExemptTripleTriad={27}\n" + "--> Exemptions: ExemptFallGuys={28}  ExemptAirForceOne={29}  ExemptMahjong={30}\n" + "--> Research: MSQ={31}  MassivePC={32}  GoldSaucer={33}  CustomTalk={34}\n" + "--> Research: NormalCutscenes={35}  Inn={36}  FeedBuddy={37}  GCRankUp={38}  HairMake={39}\n" + "--> Research: ExtraLogs={40}  AllowCutsceneSeenGlobally={41}\n" + "--> IsExemptedTerritory: {42}  ShouldPatchMemory: {43}  IsWorkshop: {44}", hook, territory, name, use, (byte)use, isCutsceneSeen, cutsceneId, isDev, _config.DevMode, Skippy.Instance._devModeValid, _config.IsEnabled, _config.SkipMSQRoulette, _config.SkipMassivePC, _config.SkipGoldSaucer, _config.SkipCustomTalk, _config.SkipNormalCutscenes, _config.SkipFeedBuddy, _config.SkipInn, _config.SkipOceanFishing, _config.SkipCrystallineConflict, _config.SkipCosmicExploration, _config.ExemptPrae, _config.ExemptCastrum, _config.ExemptPorta, _config.ExemptSubmarines, _config.ExemptChocoboRace, _config.ExemptVerminion, _config.ExemptTripleTriad, _config.ExemptFallGuys, _config.ExemptAirForceOne, _config.ExemptMahjong, _config.ResearchMSQHook, _config.ResearchMassivePCHook, _config.ResearchGoldSaucerHook, _config.ResearchCustomTalkHook, _config.ResearchNormalCutscenesHook, _config.ResearchInnHook, _config.ResearchFeedBuddyHook, _config.ResearchGrandCompanyRankUpHook, _config.ResearchHairMakeHook, _config.ResearchExtraLogs, _config.AllowCutsceneSeenGlobally, IsExemptedTerritory(territory), ShouldPatchMemory(), IsWorkshopTerritory());
             }
 
             LogToSheet(hook, territory, name, use, isCutsceneSeen, cutsceneId);

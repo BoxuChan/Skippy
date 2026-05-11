@@ -6,59 +6,95 @@ namespace Skippy.Skips {
     internal partial class SigHooks {
         private unsafe bool CutsceneSeenDetour(UIState* pointer, uint cutsceneId) {
             var territory = (ushort)_clientState.TerritoryType;
+            var use = GetIntendedUse(territory);
 
             if (_config.ResearchExtraLogs) {
-                _pluginLog.Information("CutsceneSeenDetour: cutsceneId={0} territory={1}", cutsceneId, territory);
+                _pluginLog.Information("CutsceneSeenDetour: cutsceneId={0} territory={1} use={2} ({3})\n" + "--> IsExemptedTerritory={4}  IsWorkshop={5}\n" + "--> SkipMSQRoulette={6}  SkipOceanFishing={7}  SkipCrystallineConflict={8}  SkipCosmicExploration={9}\n" + "--> SkipGoldSaucer={10}  SkipInn={11}  SkipCustomTalk={12}  SkipFeedBuddy={13}  SkipMassivePC={14}  SkipNormalCutscenes={15}\n" + "--> AllowCutsceneSeenGlobally={16}", cutsceneId, territory, use, (byte)use, IsExemptedTerritory(territory), IsWorkshopTerritory(), _config.SkipMSQRoulette, _config.SkipOceanFishing, _config.SkipCrystallineConflict, _config.SkipCosmicExploration, _config.SkipGoldSaucer, _config.SkipInn, _config.SkipCustomTalk, _config.SkipFeedBuddy, _config.SkipMassivePC, _config.SkipNormalCutscenes, _config.AllowCutsceneSeenGlobally);
             }
 
             if (IsExemptedTerritory(territory)) {
                 if (_config.ResearchExtraLogs) {
-                    _pluginLog.Information("CutsceneSeenDetour: territory is exempted, calling original.");
+                    _pluginLog.Information("CutsceneSeenDetour: territory {0} is exempted -> calling original. (cutsceneId={1})", territory, cutsceneId);
                 }
                 
                 return _cutsceneSeenHook!.Original(pointer, cutsceneId);
             }
 
             bool inMSQ = Array.IndexOf(TerritoryPrae, territory) >= 0 || Array.IndexOf(TerritoryCastrum, territory) >= 0 || Array.IndexOf(TerritoryPorta, territory) >= 0;
-            var use = GetIntendedUse(territory);
             
             if (inMSQ) {
                 if (_config.SkipMSQRoulette) {
                     if (_config.ResearchExtraLogs) {
-                        _pluginLog.Information("CutsceneSeenDetour: inMSQ + SkipMSQRoulette, returning true.");
+                        _pluginLog.Information("CutsceneSeenDetour: inMSQ + SkipMSQRoulette=true -> returning true (skip). (territory={0} cutsceneId={1})", territory, cutsceneId);
                     }
                     
                     return true;
                 }
-
+                
                 if (_config.ResearchExtraLogs) {
-                    _pluginLog.Information("CutsceneSeenDetour: inMSQ but SkipMSQRoulette is off, calling original.");
+                    _pluginLog.Information("CutsceneSeenDetour: inMSQ but SkipMSQRoulette=false -> calling original. (territory={0} cutsceneId={1})", territory, cutsceneId);
                 }
                 
                 return _cutsceneSeenHook!.Original(pointer, cutsceneId);
             }
 
-            if (_config.SkipOceanFishing && use == TerritoryIntendedUse.OceanFishing) {
-                return true;
+            if (use == TerritoryIntendedUse.OceanFishing) {
+                if (_config.SkipOceanFishing) {
+                    return true;
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
             }
 
-            if (_config.SkipCrystallineConflict && (use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch)) {
-                return true;
+            if (use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch) {
+                if (_config.SkipCrystallineConflict) {
+                    return true;
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
+            }
+
+            if (use == TerritoryIntendedUse.CosmicExploration) {
+                if (_config.SkipCosmicExploration) {
+                    return true;
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
+            }
+
+            if (Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
+                if (_config.SkipGoldSaucer) {
+                    return true;
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
+            }
+
+            if (use == TerritoryIntendedUse.Inn) {
+                if (_config.SkipInn) {
+                    return true;
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
+            }
+
+            if (use == TerritoryIntendedUse.HousingIndoor) {
+                if (IsWorkshopTerritory() && _config.SkipCustomTalk) {
+                    return true;
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
+            }
+
+            if (use == TerritoryIntendedUse.HousingOutdoor) {
+                if (_config.SkipFeedBuddy) {
+                    return true;
+                }
+                
+                return _cutsceneSeenHook!.Original(pointer, cutsceneId);
             }
 
             if (_config.SkipMassivePC) {
-                return true;
-            }
-
-            if (_config.SkipCosmicExploration && use == TerritoryIntendedUse.CosmicExploration) {
-                return true;
-            }
-
-            if (_config.SkipGoldSaucer && Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
-                return true;
-            }
-
-            if (_config.SkipCustomTalk) {
                 return true;
             }
 
@@ -66,23 +102,13 @@ namespace Skippy.Skips {
                 return true;
             }
 
-            if (_config.SkipFeedBuddy) {
-                return true;
-            }
-
-            if (_config.SkipInn) {
-                return true;
-            }
-
             if (_config.AllowCutsceneSeenGlobally) {
-                if (use == TerritoryIntendedUse.OceanFishing || use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch) {
-                    LogExemption("CutsceneSeen_RiskySkips", true, cutsceneId);
-                } else if (Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
+                if (Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
                     LogExemption("CutsceneSeen_GoldSaucer", true, cutsceneId);
-                } else if (IsWorkshopTerritory()) {
-                    LogExemption("CutsceneSeen_CustomTalk", true, cutsceneId);
                 } else if (use == TerritoryIntendedUse.Inn) {
                     LogExemption("CutsceneSeen_RiskySkips", true, cutsceneId);
+                } else if (IsWorkshopTerritory()) {
+                    LogExemption("CutsceneSeen_CustomTalk", true, cutsceneId);
                 } else {
                     LogExemption("CutsceneSeen_NormalCutscenes", true, cutsceneId);
                 }
@@ -90,7 +116,7 @@ namespace Skippy.Skips {
             }
 
             if (_config.ResearchExtraLogs) {
-                _pluginLog.Information("CutsceneSeenDetour: no skip matched, calling original. (inMSQ={0} use={1})", inMSQ, use);
+                _pluginLog.Information("CutsceneSeenDetour: no skip matched -> calling original. (territory={0} use={1} ({2}) inMSQ={3} cutsceneId={4})", territory, use, (byte)use, inMSQ, cutsceneId);
             }
 
             return _cutsceneSeenHook!.Original(pointer, cutsceneId);
