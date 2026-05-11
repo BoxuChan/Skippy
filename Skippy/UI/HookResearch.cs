@@ -109,7 +109,7 @@ namespace Skippy.UI {
             ImGui.Spacing();
 
             bool extraLogs = _config.ResearchExtraLogs;
-            ResearchOptionToggle("Extra Logs", "Adds verbose research logging for all hook fires, territory changes, and IsCutsceneSeen events with full context data.", ref extraLogs);
+            ResearchOptionToggle("Extra Logs", "Enables verbose research logging to your Dalamud Logs.\n\n" + "Information:\n" + "Hook, territory ID, zone, intended use, cutsceneId, isCutsceneSeen, whether the territory is exempted, ShouldPatchMemory, IsWorkshop, DevMode, DevModeValid, and the current value of every skip toggle, exemption flag, and research toggle in the config.", ref extraLogs);
             _config.ResearchExtraLogs = extraLogs;
 
             SectionHeader("New Hooks Exploration");

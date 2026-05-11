@@ -81,5 +81,7 @@ namespace Skippy {
         public bool AllowCutsceneSeenGlobally { get; set; } = false;
 
         public bool HideWarning { get; set; } = false;
+        
+        public bool HideBadge { get; set; } = false;
     }
 }

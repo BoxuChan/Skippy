@@ -1,11 +1,12 @@
 [
   {
-    "version": "2.2.4.1",
-    "date": "2026-05-10",
+    "version": "2.2.4.2",
+    "date": "2026-05-11",
     "changes": [
-      "Global: (Bugfix) Fixed an issue that led to cutscenes getting skipped from the wrong category being enabled.",
-      "Auto-Party Mode: (Bugfix) Fixed various issues with the Party Plugin Check mode.",
-      "UI: Added a Supporter badge for the people who helped test Skippy and its functions."
+      "Global: (Bugfix) Fixed Porta Decumana cutscene not skipping even with the right toggles on.",
+      "Global: (Bugfix) Hopefully properly fixed skip categories spilling over other categories and affecting their skipping abilities.",
+      "Logger: Enhanced the logging capabilities of Skippy for research purposes.",
+      "UI: Added a button to the topbar to toggle the Tester badge visibility on/off."
     ]
   }
 ]

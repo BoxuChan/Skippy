@@ -7,7 +7,7 @@ namespace Skippy.Skips {
     internal partial class SigHooks {
         internal static readonly ushort[] TerritoryPrae = [1044];
         internal static readonly ushort[] TerritoryCastrum = [1043];
-        internal static readonly ushort[] TerritoryPorta = [1046];
+        internal static readonly ushort[] TerritoryPorta = [1048];
         private static readonly ushort[] TerritoryMahjong = [831];
 
         internal unsafe bool IsWorkshopTerritory() {
@@ -31,7 +31,10 @@ namespace Skippy.Skips {
             if (_config.ResearchExtraLogs) {
                 var use = GetIntendedUse((ushort)territory);
                 var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault((ushort)territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
-                _pluginLog.Information("TerritoryChanged: id={0} name={1} intendedUse={2} ({3})", territory, name, use, (byte)use);
+                bool willExempt = IsExemptedTerritory((ushort)territory);
+                bool willPatch = ShouldPatchMemory();
+                
+                _pluginLog.Information("TerritoryChanged: id={0} name={1} intendedUse={2} ({3})\n" + "--> IsExemptedTerritory={4}  ShouldPatchMemory={5}  IsWorkshop={6}\n" + "--> SetEnabled result: {7}", territory, name, use, (byte)use, willExempt, willPatch, IsWorkshopTerritory(), _config.IsEnabled && !willExempt && willPatch);
             }
             
             bool exempt = IsExemptedTerritory((ushort)territory);
@@ -88,10 +91,6 @@ namespace Skippy.Skips {
             }
 
             if (_config.AllowCutsceneSeenGlobally) {
-                return true;
-            }
-
-            if (_config.ResearchMSQHook || _config.ResearchMassivePCHook || _config.ResearchGoldSaucerHook || _config.ResearchCustomTalkHook || _config.ResearchNormalCutscenesHook || _config.ResearchInnHook || _config.ResearchFeedBuddyHook) {
                 return true;
             }
 

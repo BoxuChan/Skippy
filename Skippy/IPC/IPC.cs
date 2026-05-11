@@ -147,7 +147,7 @@ namespace Skippy.IPC {
 			["SkipOceanFishing"] = _config.SkipOceanFishing,
 			["SkipCrystallineConflict"] = _config.SkipCrystallineConflict,
 			["SkipInn"] = _config.SkipInn,
-			["AllowCutsceneSeenGlobally"] = _config.AllowCutsceneSeenGlobally,
+			["AllowCutsceneSeenGlobally"] = _config.AllowCutsceneSeenGlobally
 		};
 	}
 }
