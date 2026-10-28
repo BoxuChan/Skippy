@@ -1,12 +1,12 @@
 [
   {
-    "version": "2.2.4.2",
-    "date": "2026-05-11",
+    "version": "2.2.5.0",
+    "date": "2026-10-28",
     "changes": [
-      "Global: (Bugfix) Fixed Porta Decumana cutscene not skipping even with the right toggles on.",
-      "Global: (Bugfix) Hopefully properly fixed skip categories spilling over other categories and affecting their skipping abilities.",
-      "Logger: Enhanced the logging capabilities of Skippy for research purposes.",
-      "UI: Added a button to the topbar to toggle the Tester badge visibility on/off."
+      "Global: (Bugfix) Fixed MSQ Roulette Cutscenes being skipped by using different categories.",
+      "Global: (Bugfix) Fixed Risky Skips from overflowing into other categories and being skipped without the user's approval.",
+      "Logger: (Bugfix) Fixed the delay and slowness of the plugin to connect/read/write with its datasheet.",
+      "Gold Saucer: Added Keybound Brawler to the options."
     ]
   }
 ]

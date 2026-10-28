@@ -4,12 +4,13 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+
 using Dalamud;
 using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
+
 using FFXIVClientStructs.FFXIV.Client.Game.UI; 
 using Lumina.Excel.Sheets;
-
 using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
 
 namespace Skippy.Skips {
@@ -28,11 +29,12 @@ namespace Skippy.Skips {
             var body = await content.ReadAsStringAsync().ConfigureAwait(false);
             for (int i = 0; i < 5; i++) {
                 var request = new HttpRequestMessage(HttpMethod.Post, url) {
-                    Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json")
+                    Content = new StringContent(body, Encoding.UTF8, "application/json")
                 };
+                
                 var response = await Http.SendAsync(request).ConfigureAwait(false);
                 
-                if ((int)response.StatusCode is 301 or 302 or 303 or 307 or 308) {
+                if ((int) response.StatusCode is 301 or 302 or 303 or 307 or 308) {
                     url = response.Headers.Location?.ToString() ?? url;
                     continue;
                 }
@@ -45,7 +47,7 @@ namespace Skippy.Skips {
             for (int i = 0; i < 5; i++) {
                 var response = await Http.GetAsync(url).ConfigureAwait(false);
         
-                if ((int)response.StatusCode is 301 or 302 or 303 or 307 or 308) {
+                if ((int) response.StatusCode is 301 or 302 or 303 or 307 or 308) {
                     url = response.Headers.Location?.ToString() ?? url;
                     continue;
                 }
@@ -54,8 +56,11 @@ namespace Skippy.Skips {
             }
             return string.Empty;
         }
-
-        private const string DocURL = "https://script.google.com/macros/s/AKfycbzAulYaKlLlW_IqhNMy51jBzGTuRfYIM2dfhksSkBFRO87iPpJ7N3V3zsrzOPjNVjxn4g/exec";
+        
+        private const string HooksURL = "https://script.google.com/macros/s/AKfycbz2EOwTYOqxGuRfBIuYqLihhWLZFgJ4seNusgBz98nKjYXQWNX4Hg1bCCk87qfiVNB96A/exec";
+        private const string MatchmakingURL = "https://script.google.com/macros/s/AKfycbzT5KebwghkqoTo8LZt1GAg6lz8uNImu9p5slE0ZSeMl49YP9AMmHnasm_LJbm0nXxV/exec";
+        private const string TestersURL = "https://script.google.com/macros/s/AKfycbyv6HqSB9Q0y3OvojXo4my3LUH2U_ZqR89xvFKJFwQpk0DQ-7IdWUN-wJAub1nWMbvM/exec";
+        private const string PasswordURL = "https://script.google.com/macros/s/AKfycbxJ5elyO3HPmdh2d2edIrkdh3zUyfxaJg_QLtE_6ADoup7vRAlZiurDI9Q0Rjm8LyyB/exec";
 
         private Hook<UIState.Delegates.IsCutsceneSeen>? _cutsceneSeenHook;
         private Hook<ContentDirectorDelegate>? _msqHook;
@@ -72,14 +77,7 @@ namespace Skippy.Skips {
         private delegate long NormalCutscenesDelegate(nint luaState1, nint luaState2);
         private delegate long SinglePtrDelegate(nint luaState);
 
-        internal SigHooks(
-            Config config,
-            IPluginLog pluginLog,
-            IGameInteropProvider gameInteropProvider,
-            IClientState clientState,
-            IDataManager dataManager,
-            IPlayerState playerState,
-            CutsceneAddressResolver address) {
+        internal SigHooks(Config config, IPluginLog pluginLog, IGameInteropProvider gameInteropProvider, IClientState clientState, IDataManager dataManager, IPlayerState playerState, CutsceneAddressResolver address) {
             _config = config;
             _pluginLog = pluginLog;
             _gameInteropProvider = gameInteropProvider;
@@ -89,17 +87,15 @@ namespace Skippy.Skips {
             _address = address;
         }
 
-        internal static readonly string ZeroUserID = Convert.ToHexString(SHA256.HashData(BitConverter.GetBytes(0UL)))[..32].ToLowerInvariant();
+        internal static readonly string NoUserID = Convert.ToHexString(SHA256.HashData(BitConverter.GetBytes(0UL)))[..32].ToLowerInvariant();
 
         internal string GetUserID() {
             var hash = SHA256.HashData(BitConverter.GetBytes(_playerState.ContentId));
-            
             return Convert.ToHexString(hash)[..32].ToLowerInvariant();
         }
 
         internal string? BuildPartyID(IPartyList partyList) {
             var ids = new List<ulong>();
-
             foreach (var member in partyList) {
                 if (member.ContentId != 0) {
                     ids.Add(member.ContentId);
@@ -107,7 +103,6 @@ namespace Skippy.Skips {
             }
 
             var selfId = _playerState.ContentId;
-            
             if (selfId != 0 && !ids.Contains(selfId)) {
                 ids.Add(selfId);
             }
@@ -117,15 +112,12 @@ namespace Skippy.Skips {
             }
 
             ids.Sort();
-
             var buffer = new byte[ids.Count * 8];
-            
             for (int i = 0; i < ids.Count; i++) {
                 BitConverter.TryWriteBytes(buffer.AsSpan(i * 8, 8), ids[i]);
             }
 
             var hash = SHA256.HashData(buffer);
-            
             return Convert.ToHexString(hash)[..32].ToLowerInvariant();
         }
 
@@ -136,7 +128,7 @@ namespace Skippy.Skips {
                 try {
                     var json = "{" + $"\"action\":\"matchmaking\"," + $"\"time\":\"{DateTime.UtcNow:u}\"," + $"\"userId\":\"{userId}\"," + $"\"partyId\":\"{partyId}\"," + $"\"duty\":\"{dutyName}\"," + $"\"partySize\":{partySize}," + $"\"version\":\"{Version}\"" + "}";
                     
-                    await PostWithRedirectAsync(DocURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+                    await PostWithRedirectAsync(MatchmakingURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
                 } catch { }
             });
         }
@@ -148,14 +140,14 @@ namespace Skippy.Skips {
                 try {
                     var json = "{" + $"\"action\":\"deleteMatchmaking\"," + $"\"userId\":\"{userId}\"," + $"\"partyId\":\"{partyId}\"" + "}";
                     
-                    await PostWithRedirectAsync(DocURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+                    await PostWithRedirectAsync(MatchmakingURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
                 } catch { }
             });
         }
         
         internal static async Task<bool> CheckAllPartyHasSkippy(string partyId, int expectedSize) {
             try {
-                var url = DocURL + $"?action=checkParty&partyId={Uri.EscapeDataString(partyId)}&expectedSize={expectedSize}";
+                var url = MatchmakingURL + $"?action=checkParty&partyId={Uri.EscapeDataString(partyId)}&expectedSize={expectedSize}";
                 var result = await GetStringWithRedirectAsync(url).ConfigureAwait(false);
         
                 return result.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
@@ -166,7 +158,7 @@ namespace Skippy.Skips {
         
         internal static async Task<TesterInfo?> CheckTester(string userId) {
             try {
-                var url = DocURL + $"?action=checkTester&userId={Uri.EscapeDataString(userId)}";
+                var url = TestersURL + $"?action=checkTester&userId={Uri.EscapeDataString(userId)}";
                 var result = (await GetStringWithRedirectAsync(url).ConfigureAwait(false)).Trim();
 
                 if (string.IsNullOrEmpty(result) || result.Equals("false", StringComparison.OrdinalIgnoreCase)) {
@@ -227,12 +219,12 @@ namespace Skippy.Skips {
 
             RefreshContentDirectorHook(ref _massivePCHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 8B 11", (_config.IsEnabled && (_config.SkipMassivePC || _config.SkipCosmicExploration)) || (devMode && _config.ResearchMassivePCHook), ExemptionMassivePC);
 
-            bool goldSaucer = (_config.IsEnabled && (_config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys || _config.ExemptAirForceOne || _config.ExemptMahjong)) || (devMode && _config.ResearchGoldSaucerHook);
+            bool goldSaucer = (_config.IsEnabled && (_config.SkipGoldSaucer || _config.ExemptChocoboRace || _config.ExemptVerminion || _config.ExemptTripleTriad || _config.ExemptFallGuys || _config.ExemptAirForceOne || _config.ExemptKeyboundBrawler || _config.ExemptMahjong)) || (devMode && _config.ResearchGoldSaucerHook);
             RefreshContentDirectorHook(ref _goldSaucerHook, "48 89 5C 24 ?? 57 48 83 EC 50 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? BA ?? ?? ?? ?? B3 01 E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? 48 8B F8 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 84 99 ?? ?? ?? ??", goldSaucer, ExemptionGoldSaucer);
 
-            RefreshContentDirectorHook(ref _customTalkHook, "48 83 EC 58 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 85 C9 74 06", (_config.IsEnabled && _config.SkipCustomTalk) || (devMode && _config.ResearchCustomTalkHook), ExemptionCustomTalk);
+            RefreshContentDirectorHook(ref _customTalkHook, "48 83 EC 58 48 8B D1 48 8D 4C 24 ?? E8 ?? ?? ?? ?? BA ?? ?? ?? ?? 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 4C 8B C0 BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 08 48 85 C9 74 06", (_config.IsEnabled && (_config.SkipCustomTalk || SubmarinesSkip)) || (devMode && _config.ResearchCustomTalkHook), ExemptionCustomTalk);
 
-            RefreshNormalCutscenesHook((_config.IsEnabled && (_config.SkipNormalCutscenes || _config.SkipCosmicExploration || _config.ExemptSubmarines)) || (devMode && _config.ResearchNormalCutscenesHook));
+            RefreshNormalCutscenesHook((_config.IsEnabled && (_config.SkipNormalCutscenes || _config.SkipCosmicExploration || SubmarinesSkip)) || (devMode && _config.ResearchNormalCutscenesHook));
 
             RefreshInnHook((_config.IsEnabled && _config.SkipInn) || (devMode && _config.ResearchInnHook));
 
@@ -374,11 +366,11 @@ namespace Skippy.Skips {
             }
         }
 
-        private const string Version = "2.2.4.2";
+        private const string Version = "2.2.5.0";
 
         internal static async Task<string> FetchPassword() {
             try {
-                var url = DocURL + "?action=getPassword";
+                var url = PasswordURL + "?action=getPassword";
                 var result = await GetStringWithRedirectAsync(url).ConfigureAwait(false);
                 
                 return result.Trim();
@@ -397,7 +389,7 @@ namespace Skippy.Skips {
                     var seen = isCutsceneSeen ? "true" : "false";
                     var json = "{" + $"\"hook\":\"{hook}\"," + $"\"territory\":{territory}," + $"\"place\":\"{placeName}\"," + $"\"intendedUse\":\"{intendedUse}\"," + $"\"time\":\"{DateTime.UtcNow:u}\"," + $"\"version\":\"{Version}\"," + $"\"devMode\":{dev}," + $"\"isCutsceneSeen\":{seen}," + $"\"cutsceneId\":{cutsceneId}," + $"\"userId\":\"{userId}\"" + "}";
                     
-                    await PostWithRedirectAsync(DocURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+                    await PostWithRedirectAsync(HooksURL, new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
                 } catch { }
             });
         }

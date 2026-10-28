@@ -13,7 +13,7 @@ namespace Skippy.UI {
             bool changed = false;
             bool global = _config.AllowCutsceneSeenGlobally;
 
-            FeatureCheckbox("##AllowCutsceneSeenGlobally", "Disable your first-time viewing experience everywhere", "Opts in to allowing any cutscene in the game to be skipped. This may so on cause cutscenes you've never seen to be skipped.", ref global, out changed);
+            FeatureCheckbox("##AllowCutsceneSeenGlobally", "Disable your first-time viewing experience", "Opts in to allowing any cutscene in the game to be skipped. This may so on cause cutscenes you've never seen to be skipped.", ref global, out changed);
 
             if (changed) {
                 _config.AllowCutsceneSeenGlobally = global;

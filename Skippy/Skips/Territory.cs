@@ -1,6 +1,8 @@
-using Dalamud.Plugin.Services;
-using Lumina.Excel.Sheets;
+using System;
 
+using Dalamud.Plugin.Services;
+
+using Lumina.Excel.Sheets;
 using TerritoryIntendedUse = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
 
 namespace Skippy.Skips {
@@ -19,147 +21,136 @@ namespace Skippy.Skips {
             if (_dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(territoryId) is { } row) {
                 return (TerritoryIntendedUse)row.TerritoryIntendedUse.RowId;
             }
-            
+
             return 0;
         }
+
+        internal static bool IsMSQTerritory(ushort t) => Array.IndexOf(TerritoryPrae, t) >= 0 || Array.IndexOf(TerritoryCastrum, t) >= 0 || Array.IndexOf(TerritoryPorta, t) >= 0;
+
+        internal static bool IsPvPVanilla(TerritoryIntendedUse use) => use is TerritoryIntendedUse.Frontline or TerritoryIntendedUse.RivalWings;
+
+        internal static bool IsGoldSaucerTerritory(ushort t, TerritoryIntendedUse use) => Array.IndexOf(GoldSaucerIntendedUses, use) >= 0 || Array.IndexOf(TerritoryMahjong, t) >= 0;
+
+        internal bool IsRiskyTerritory(TerritoryIntendedUse use, out bool skip) {
+            switch (use) {
+                case TerritoryIntendedUse.OceanFishing:
+                    skip = _config.SkipOceanFishing;
+                    return true;
+
+                case TerritoryIntendedUse.CrystallineConflict:
+                case TerritoryIntendedUse.CrystallineConflictCustomMatch:
+                    skip = _config.SkipCrystallineConflict;
+                    return true;
+
+                case TerritoryIntendedUse.Inn:
+                    skip = _config.SkipInn;
+                    return true;
+            }
+
+            skip = false;
+            return false;
+        }
+
+        internal bool MSQSkipsIn(ushort t) {
+            bool tick = Array.IndexOf(TerritoryPrae, t) >= 0 ? _config.ExemptPrae : Array.IndexOf(TerritoryCastrum, t) >= 0 ? _config.ExemptCastrum : Array.IndexOf(TerritoryPorta, t) >= 0 && _config.ExemptPorta;
+            return _config.SkipMSQRoulette ? !tick : tick;
+        }
+
+        internal bool GoldSaucerSkipsIn(ushort t, TerritoryIntendedUse use) {
+            bool tick;
+
+            switch (use) {
+                case TerritoryIntendedUse.ChocoboRacing:
+                    tick = _config.ExemptChocoboRace;
+                    break;
+                
+                case TerritoryIntendedUse.LordOfVerminion:
+                    tick = _config.ExemptVerminion;
+                    break;
+                
+                case TerritoryIntendedUse.TripleTriadBattlehall:
+                case TerritoryIntendedUse.TripleTriadOpenTournament:
+                case TerritoryIntendedUse.TripleTriadInvitationalParlor:
+                    tick = _config.ExemptTripleTriad;
+                    break;
+                
+                case TerritoryIntendedUse.Blunderville:
+                    tick = _config.ExemptFallGuys;
+                    break;
+                
+                case TerritoryIntendedUse.AirForceOne:
+                    tick = _config.ExemptAirForceOne;
+                    break;
+                
+                case TerritoryIntendedUse.KeyboundBrawler:
+                    tick = _config.ExemptKeyboundBrawler;
+                    break;
+                
+                default:
+                    tick = Array.IndexOf(TerritoryMahjong, t) >= 0 && _config.ExemptMahjong;
+                    break;
+            }
+
+            return _config.SkipGoldSaucer ? !tick : tick;
+        }
+
+        internal bool SubmarinesSkip => _config.SkipCustomTalk ? !_config.ExemptSubmarines : _config.ExemptSubmarines;
+
+        internal bool TerritoryActive(ushort t) {
+            var use = GetIntendedUse(t);
+
+            if (IsRiskyTerritory(use, out var risky)) {
+                return risky;
+            }
+
+            if (IsPvPVanilla(use)) {
+                return false;
+            }
+
+            if (IsMSQTerritory(t)) {
+                return MSQSkipsIn(t);
+            }
+
+            if (use == TerritoryIntendedUse.CosmicExploration) {
+                return _config.SkipCosmicExploration;
+            }
+
+            if (IsGoldSaucerTerritory(t, use)) {
+                return GoldSaucerSkipsIn(t, use);
+            }
+
+            if (IsWorkshopTerritory()) {
+                return SubmarinesSkip;
+            }
+
+            return _config.SkipMassivePC || _config.SkipCustomTalk || _config.SkipNormalCutscenes || _config.SkipFeedBuddy || _config.AllowCutsceneSeenGlobally;
+        }
+
+        internal bool ShouldPatchMemory() => TerritoryActive((ushort) _clientState.TerritoryType);
+
+        internal bool IsExemptedTerritory(ushort territory) => !TerritoryActive(territory);
 
         internal void OnTerritoryChanged(uint territory) {
             if (!_config.IsEnabled) {
                 return;
             }
-            
+
             if (_config.ResearchExtraLogs) {
-                var use = GetIntendedUse((ushort)territory);
-                var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault((ushort)territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
-                bool willExempt = IsExemptedTerritory((ushort)territory);
-                bool willPatch = ShouldPatchMemory();
-                
-                _pluginLog.Information("TerritoryChanged: id={0} name={1} intendedUse={2} ({3})\n" + "--> IsExemptedTerritory={4}  ShouldPatchMemory={5}  IsWorkshop={6}\n" + "--> SetEnabled result: {7}", territory, name, use, (byte)use, willExempt, willPatch, IsWorkshopTerritory(), _config.IsEnabled && !willExempt && willPatch);
-            }
-            
-            bool exempt = IsExemptedTerritory((ushort)territory);
-            SetEnabled(!exempt && ShouldPatchMemory());
-            
-            if (!exempt) {
-                RefreshHooks();
-            }
-        }
+                var use = GetIntendedUse((ushort) territory);
+                var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault((ushort) territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
+                bool active = TerritoryActive((ushort) territory);
 
-        internal bool ShouldPatchMemory() {
-            var territory = (ushort)_clientState.TerritoryType;
-            var use = GetIntendedUse(territory);
-            bool inMSQ = System.Array.IndexOf(TerritoryPrae, territory) >= 0 || System.Array.IndexOf(TerritoryCastrum, territory) >= 0 || System.Array.IndexOf(TerritoryPorta, territory) >= 0;
-
-            if (_config.SkipMSQRoulette && inMSQ) {
-                return true;
+                _pluginLog.Information("TerritoryChanged: id={0} name={1} intendedUse={2} ({3}) active={4} IsWorkshop={5}", territory, name, use, (byte) use, active, IsWorkshopTerritory());
             }
 
-            if (_config.SkipOceanFishing && use == TerritoryIntendedUse.OceanFishing) {
-                return true;
-            }
-
-            if (_config.SkipCrystallineConflict && (use == TerritoryIntendedUse.CrystallineConflict || use == TerritoryIntendedUse.CrystallineConflictCustomMatch)) {
-                return true;
-            }
-
-            if (_config.SkipMassivePC) {
-                return true;
-            }
-
-            if (_config.SkipGoldSaucer && System.Array.IndexOf(GoldSaucerIntendedUses, use) >= 0) {
-                return true;
-            }
-
-            if (_config.SkipCustomTalk) {
-                return true;
-            }
-
-            if (_config.ExemptSubmarines && IsWorkshopTerritory()) {
-                return true;
-            }
-
-            if (_config.SkipNormalCutscenes) {
-                return true;
-            }
-
-            if (_config.SkipFeedBuddy) {
-                return true;
-            }
-
-            if (_config.SkipInn) {
-                return true;
-            }
-
-            if (_config.AllowCutsceneSeenGlobally) {
-                return true;
-            }
-
-            return false;
-        }
-
-        internal bool IsExemptedTerritory(ushort territory) {
-            var use = GetIntendedUse(territory);
-
-            if (!_config.SkipOceanFishing && use == TerritoryIntendedUse.OceanFishing) {
-                return true;
-            }
-
-            switch (_config.SkipCrystallineConflict) {
-                case false when use == TerritoryIntendedUse.CrystallineConflict:
-                case false when use == TerritoryIntendedUse.CrystallineConflictCustomMatch:
-                    return true;
-            }
-
-            switch (use) {
-                case TerritoryIntendedUse.Frontline:
-                case TerritoryIntendedUse.RivalWings:
-                    return true;
-            }
-
-            if (_config.ExemptPrae && System.Array.IndexOf(TerritoryPrae, territory) >= 0) {
-                return true;
-            }
-
-            if (_config.ExemptCastrum && System.Array.IndexOf(TerritoryCastrum, territory) >= 0) {
-                return true;
-            }
-
-            if (_config.ExemptPorta && System.Array.IndexOf(TerritoryPorta, territory) >= 0) {
-                return true;
-            }
-
-            if (_config.ExemptChocoboRace && use == TerritoryIntendedUse.ChocoboRacing) {
-                return true;
-            }
-
-            if (_config.ExemptVerminion && use == TerritoryIntendedUse.LordOfVerminion) {
-                return true;
-            }
-
-            if (_config.ExemptTripleTriad && (use == TerritoryIntendedUse.TripleTriadBattlehall || use == TerritoryIntendedUse.TripleTriadOpenTournament || use == TerritoryIntendedUse.TripleTriadInvitationalParlor)) {
-                return true;
-            }
-
-            if (_config.ExemptFallGuys && use == TerritoryIntendedUse.Blunderville) {
-                return true;
-            }
-
-            if (_config.ExemptAirForceOne && use == TerritoryIntendedUse.AirForceOne) {
-                return true;
-            }
-
-            if (_config.ExemptMahjong && System.Array.IndexOf(TerritoryMahjong, territory) >= 0) {
-                return true;
-            }
-
-            return false;
+            RefreshHooks();
         }
 
         internal void PrintTerritory(IChatGui chat) {
-            var territory = (ushort)_clientState.TerritoryType;
+            var territory = (ushort) _clientState.TerritoryType;
             var use = GetIntendedUse(territory);
             var name = _dataManager.GetExcelSheet<TerritoryType>()?.GetRowOrDefault(territory)?.PlaceName.Value.Name.ToString() ?? "Unknown";
-            
+
             chat.Print($"[Skippy] Territory: {territory} ({name}) -- IntendedUse: {use} ({(byte)use})");
         }
     }

@@ -17,6 +17,7 @@ namespace Skippy.UI {
 
             if (changed) {
                 _config.SkipMassivePC = master;
+                _config.SkipCosmicExploration = master;
                 
                 Skippy.Instance.Hooks.RefreshHooks(); 
                 _saveConfig();
@@ -31,7 +32,7 @@ namespace Skippy.UI {
             ImGui.Spacing();
 
             bool cosmicChanged = false;
-            bool cosmicSkip = _config.SkipCosmicExploration;
+            bool cosmicSkip = skipAll ? !_config.SkipCosmicExploration : _config.SkipCosmicExploration;
             string cosmicLabel = skipAll ? "Exempt: Cosmic Exploration" : "Skip: Cosmic Exploration";
             FeatureCheckbox("##SkipCosmicExploration", cosmicLabel, "Skips cutscenes that trigger within Cosmic Exploration maps. (Sinus Ardorum, Phaenna, Oizys)", ref cosmicSkip, out cosmicChanged);
 

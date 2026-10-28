@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
@@ -14,6 +15,7 @@ using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+
 using Skippy.Skips;
 
 namespace Skippy.UI {
@@ -45,7 +47,7 @@ namespace Skippy.UI {
 
         internal static readonly HttpClient Http = new();
 
-        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.4.2###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
+        internal Menu(Config config, Action<bool> setEnabled, Action saveConfig, IDalamudPluginInterface pluginInterface, ITextureProvider tex) : base("Skippy  |  v2.2.5.0###SkippyMain", ImGuiWindowFlags.NoScrollbar, forceMainWindow: false) {
             _config = config;
             _setEnabled = setEnabled;
             _saveConfig = saveConfig;
@@ -393,7 +395,7 @@ namespace Skippy.UI {
 
             ImGui.EndTable();
 
-            var footerText = "© Boxu - 2026 | Dalamud 15.0.0 (Patch 7.5)";
+            var footerText = "© Boxu - 2026 | Dalamud 15.0.0 (Patch 7.57)";
             var footerAvail = ImGui.GetContentRegionAvail().X;
             var footerY = ImGui.GetCursorPosY();
 
@@ -441,7 +443,13 @@ namespace Skippy.UI {
                     ImGui.TextUnformatted($"Skippy Tester  |  {testerInfo.Nickname}");
                 }
             } else {
+                if (clicked) {
+                    OpenUrl("https://ko-fi.com/boxu_chan");
+                }
+
                 if (hovered) {
+                    ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+
                     using var tooltip = ImRaii.Tooltip();
                     ImGui.TextUnformatted("You aren't a Skippy Tester!");
                 }

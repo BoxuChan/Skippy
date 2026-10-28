@@ -3,11 +3,14 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
+
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
-using Lumina.Excel.Sheets;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+
+using Lumina.Excel.Sheets;
+
 using Skippy.Skips;
 using Skippy.UI;
 
@@ -62,8 +65,8 @@ namespace Skippy {
             _clientState = clientState;
             _playerState = playerState;
 
-            if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 4) {
-                configuration = new Config { Version = 6 };
+            if (_pluginInterface.GetPluginConfig() is not Config configuration || configuration.Version < 6) {
+                configuration = new Config { Version = 7 };
                 _pluginInterface.SavePluginConfig(configuration);
 
                 _chatGui.Print("[Skippy] Your configuration was from an older version and has been reset to defaults. Please re-apply your settings.");
@@ -161,12 +164,12 @@ namespace Skippy {
             try {
                 string userId = Hooks.GetUserID();
                 
-                for (int i = 0; i < 10 && userId == SigHooks.ZeroUserID; i++) {
+                for (int i = 0; i < 10 && userId == SigHooks.NoUserID; i++) {
                     await Task.Delay(500).ConfigureAwait(false);
                     userId = Hooks.GetUserID();
                 }
 
-                if (userId == SigHooks.ZeroUserID) {
+                if (userId == SigHooks.NoUserID) {
                     return;
                 }
 
@@ -282,6 +285,7 @@ namespace Skippy {
             bool isMSQRoulette = condition.RowId == 0;
 
             if (!isDirectMSQ && !isMSQRoulette) {
+                ResetStaleQueueState();
                 return;
             }
 
@@ -364,6 +368,16 @@ namespace Skippy {
             }
         }
 
+        private void ResetStaleQueueState() {
+            if (_autoPartyActive || _pendingPartyId == null) {
+                return;
+            }
+
+            Hooks.DeleteMatchmaking(_pendingPartyId);
+            _pendingPartyId = null;
+            _allPartyHasSkippy = null;
+        }
+        
         private void OnTerritoryChanged(uint territory) {
             Hooks.OnTerritoryChanged(territory);
 
@@ -371,7 +385,11 @@ namespace Skippy {
 
             bool inMSQ = Array.IndexOf(SigHooks.TerritoryPrae, (ushort)territory) >= 0 || Array.IndexOf(SigHooks.TerritoryCastrum, (ushort)territory) >= 0 || Array.IndexOf(SigHooks.TerritoryPorta, (ushort)territory) >= 0;
 
-            if (inMSQ && _config.AutoEnable4Man && !_autoPartyActive && _pendingPartyId != null) {
+            if (!inMSQ && !_autoPartyActive) {
+                ResetStaleQueueState();
+            }
+            
+            if (inMSQ && _config.AutoEnable4Man && !_autoPartyActive && _pendingPartyId != null && _allPartyHasSkippy != false) {
                 _autoPartyActive = true;
 
                 if (_allPartyHasSkippy == true) {

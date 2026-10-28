@@ -1,6 +1,6 @@
 # Skippy
 
-The plugin has last been updated to function with **[Dalamud 15.0.0](https://github.com/goatcorp/Dalamud)** under FFXIV's **[7.5](https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822)** Patch.
+The plugin has last been updated to function with **[Dalamud 15.0.0](https://github.com/goatcorp/Dalamud)** under FFXIV's **[7.57](https://na.finalfantasyxiv.com/lodestone/topics/detail/6f063f4b9a856812a296954827b771da1426b4fb)** Patch.
 
 ## _"So that you never have to hear Gaius yap again."_
 

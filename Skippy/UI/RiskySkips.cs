@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 
@@ -13,16 +14,14 @@ namespace Skippy.UI {
             ImGui.PushStyleColor(ImGuiCol.Border, new Vector4(0.80f, 0.20f, 0.10f, 0.90f));
             ImGui.PushStyleVar(ImGuiStyleVar.ChildBorderSize, 1.5f);
 
-            // Measure wrap width based on available content minus child window padding on both sides
             var wrapWidth = ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X * 2f - 4f;
-            if (wrapWidth < 10f) wrapWidth = 10f;
+            if (wrapWidth < 10f) {
+                wrapWidth = 10f;
+            }
 
             var textLine1Size = ImGui.CalcTextSize(line1, false, wrapWidth);
             var textLine2Size = ImGui.CalcTextSize(line2, false, wrapWidth);
 
-            // CalcTextSize returns total pixel height for wrapped text but doesn't include the
-            // ItemSpacing.Y gap that ImGui adds between each TextUnformatted call in WrappedCenteredText.
-            // Count the number of wrapped lines to add the correct inter-line spacing.
             var lineHeight = ImGui.GetTextLineHeight();
             var line1Count = (int)MathF.Round(textLine1Size.Y / lineHeight);
             var line2Count = (int)MathF.Round(textLine2Size.Y / lineHeight);
@@ -34,15 +33,11 @@ namespace Skippy.UI {
             using (_pluginInterface.UiBuilder.IconFontHandle.Push()) {
                 iconWidth = ImGui.CalcTextSize(icon).X;
             }
+            
             var labelWidth = ImGui.CalcTextSize(" Warning").X;
 
             var spacing = ImGui.GetStyle().ItemSpacing.Y;
-            var bannerHeight = spacing * 4f
-                               + ImGui.GetTextLineHeight()
-                               + textLine1Size.Y + (line1Count - 1) * spacing
-                               + textLine2Size.Y + (line2Count - 1) * spacing
-                               + ImGui.GetStyle().WindowPadding.Y * 2f
-                               + 4f;
+            var bannerHeight = spacing * 4f + ImGui.GetTextLineHeight() + textLine1Size.Y + (line1Count - 1) * spacing + textLine2Size.Y + (line2Count - 1) * spacing + ImGui.GetStyle().WindowPadding.Y * 2f + 4f;
 
             if (ImGui.BeginChild("##Banner", new Vector2(-1, bannerHeight), true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)) {
                 ImGui.Spacing();
