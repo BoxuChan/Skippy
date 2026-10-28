@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 
@@ -93,6 +94,14 @@ namespace Skippy.IPC {
 			if (_config.ExemptMahjong) {
 				list.Add(SkippedCategory.ExemptMahjong);
 			}
+			
+			if (_config.ExemptKeyboundBrawler) {
+				list.Add(SkippedCategory.ExemptKeyboundBrawler);
+			}
+
+			if (_config.ExemptSubmarines) {
+				list.Add(SkippedCategory.ExemptSubmarines);
+			}
 
 			if (_config.SkipCustomTalk) {
 				list.Add(SkippedCategory.SkipCustomTalk);
@@ -141,6 +150,8 @@ namespace Skippy.IPC {
 			["ExemptFallGuys"] = _config.ExemptFallGuys,
 			["ExemptAirForceOne"] = _config.ExemptAirForceOne,
 			["ExemptMahjong"] = _config.ExemptMahjong,
+			["ExemptKeyboundBrawler"] = _config.ExemptKeyboundBrawler,
+			["ExemptSubmarines"] = _config.ExemptSubmarines,
 			["SkipCustomTalk"] = _config.SkipCustomTalk,
 			["SkipNormalCutscenes"] = _config.SkipNormalCutscenes,
 			["SkipFeedBuddy"] = _config.SkipFeedBuddy,

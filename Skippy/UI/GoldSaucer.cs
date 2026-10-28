@@ -1,5 +1,4 @@
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility.Raii;
 
 namespace Skippy.UI {
     internal sealed partial class Menu {
@@ -22,6 +21,7 @@ namespace Skippy.UI {
                 _config.ExemptVerminion = false;
                 _config.ExemptTripleTriad = false;
                 _config.ExemptFallGuys = false;
+                _config.ExemptKeyboundBrawler = false;
                 _config.ExemptAirForceOne = false;
                 _config.ExemptMahjong = false;
                 
@@ -67,22 +67,13 @@ namespace Skippy.UI {
             Toggle("##ExemptTripleTriad", skipAll ? "Exempt: Triple Triad (Battlehall / Tournaments)" : "Skip: Triple Triad (Battlehall / Tournaments)", skipAll ? "Cutscenes will play normally in Triple Triad Battlehall, Open Tournaments, and Invitational Parlor." : "Cutscenes will be skipped in Triple Triad Battlehall, Open Tournaments, and Invitational Parlor.", ref tripleTriad);
             _config.ExemptTripleTriad = tripleTriad;
 
-            if (!_config.FallGuysEventActive) {
-                ImGui.BeginDisabled();
-                bool dummy = _config.ExemptFallGuys;
-                bool tickable = false;
-                FeatureCheckbox("##ExemptFallGuys", skipAll ? "Exempt: Fall Guys Event (Blunderville)" : "Skip: Fall Guys Event (Blunderville)", "Blunderville is the seasonal Fall Guys crossover event. This option will only be available when the event is active.", ref dummy, out tickable);
-                ImGui.EndDisabled();
-                
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-                    using var tooltip = ImRaii.Tooltip();
-                    ImGui.TextUnformatted("The Fall Guys event isn't currently active. This option will be available when it returns!");
-                }
-            } else {
-                bool fallguys = _config.ExemptFallGuys;
-                Toggle("##ExemptFallGuys", skipAll ? "Exempt: Fall Guys Event (Blunderville)" : "Skip: Fall Guys Event (Blunderville)", "Blunderville is the seasonal Fall Guys crossover event. This option will only be available when the event is active.", ref fallguys);
-                _config.ExemptFallGuys = fallguys;
-            }
+            bool fallguys = _config.ExemptFallGuys;
+            Toggle("##ExemptFallGuys", skipAll ? "Exempt: Fall Guys Event (Blunderville)" : "Skip: Fall Guys Event (Blunderville)", skipAll ? "Cutscenes will play normally in Blunderville (Fall Guys crossover event)." : "Cutscenes will be skipped in Blunderville (Fall Guys crossover event).", ref fallguys);
+            _config.ExemptFallGuys = fallguys;
+
+            bool keybound = _config.ExemptKeyboundBrawler;
+            Toggle("##ExemptKeyboundBrawler", skipAll ? "Exempt: Keybound Brawler" : "Skip: Keybound Brawler", skipAll ? "Cutscenes will play normally during Keybound Brawler." : "Cutscenes will be skipped during Keybound Brawler.", ref keybound);
+            _config.ExemptKeyboundBrawler = keybound;
 
             WipToggle(skipAll ? "Exempt: Fashion Report" : "Skip: Fashion Report");
         }

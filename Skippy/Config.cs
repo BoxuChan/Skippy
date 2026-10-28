@@ -1,4 +1,5 @@
 using System;
+
 using Dalamud.Configuration;
 
 namespace Skippy {
@@ -25,6 +26,8 @@ namespace Skippy {
         SkipInn,
         AllowCutsceneSeenGlobally,
         SkipCosmicExploration,
+        ExemptKeyboundBrawler,
+        ExemptSubmarines,
     }
 
     [Serializable]
@@ -47,6 +50,7 @@ namespace Skippy {
         public bool ExemptTripleTriad { get; set; } = false;
         public bool FallGuysEventActive { get; set; } = false;
         public bool ExemptFallGuys { get; set; } = false;
+        public bool ExemptKeyboundBrawler { get; set; } = false;
         public bool ExemptAirForceOne { get; set; } = false;
         public bool ExemptMahjong { get; set; } = false;
 
